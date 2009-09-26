@@ -126,31 +126,36 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			//Restore
 			PatchMem(exceptAddr,(void*)&bpMap[exceptAddr].original_opcode, 1);
 
+			bool doPatch = true;
 			if(loop_LoadLibrary == v_AllHooks.end())
 				loop_LoadLibrary = v_AllHooks.begin();
 			else
 			{
 				ReadMem(pdProcAddress, &(*loop_LoadLibrary)->proc_address, 4);
 
-				if(&(*loop_LoadLibrary)->proc_address)
+				if((*loop_LoadLibrary)->proc_address) {
 					Log::SelWriteLine(
 						"SyringeDebugger::HandleException: Loaded ProcAddress: %s - %s - 0x%08X",
 						(*loop_LoadLibrary)->lib,
 						(*loop_LoadLibrary)->proc,
 						(*loop_LoadLibrary)->proc_address);
-				else
+				} else {
+					doPatch = false;
 					Log::SelWriteLine(
 							"SyringeDebugger::HandleException: Could not retrieve ProcAddress for: %s - %s",
 							(*loop_LoadLibrary)->lib,
 							(*loop_LoadLibrary)->proc);
+				}
 
 				++loop_LoadLibrary;
 			}
 
 			if(loop_LoadLibrary != v_AllHooks.end())
 			{
-				PatchMem(pdLibName, &(*loop_LoadLibrary)->lib, MAX_NAME_LENGTH);
-				PatchMem(pdProcName, &(*loop_LoadLibrary)->proc, MAX_NAME_LENGTH);
+//				if(doPatch) {
+					PatchMem(pdLibName, &(*loop_LoadLibrary)->lib, MAX_NAME_LENGTH);
+					PatchMem(pdProcName, &(*loop_LoadLibrary)->proc, MAX_NAME_LENGTH);
+//				}
 				
 				context.Eip = (DWORD)pcLoadLibrary;
 
@@ -160,8 +165,6 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				SetThreadContext(currentThread, &context);
 
 				(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = exceptAddr;
-
-				//Log::SelWriteLine("SyringeDebugger::HandleException: Jumping to 0x%08X...",context.Eip);
 
 				return DBG_CONTINUE;
 			}
@@ -402,7 +405,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 			Log::SelWriteLine("\tStack dump:");
 			DWORD* esp=(DWORD*)context.Esp;
-			for(int i = 0; i < 50; i++)
+			for(int i = 0; i < 100; i++)
 			{
 				DWORD* p = esp + i;
 
@@ -472,7 +475,24 @@ bool SyringeDebugger::Run(char* params)
 	pcLoadLibrary = pAlloc + 1;
 
 	BYTE cLoadLibrary[] = {
-		0x90,0x50,0x51,0x52,0x68,INIT,INIT,INIT,INIT,0xFF,0x15,INIT,INIT,INIT,INIT,0x85,0xC0,0x74,0x15,0x68,INIT,INIT,INIT,INIT,0x50,0xFF,0x15,INIT,INIT,INIT,INIT,0x85,0xC0,0x90,0x90,0xA3,INIT,INIT,INIT,INIT,0x5A,0x59,0x58,0xEB,0xD3
+		0x90, // NOP
+		0x50, // push eax
+		0x51, // push ecx
+		0x52, // push edx
+		0x68,INIT,INIT,INIT,INIT, //push offset pdLibName
+		0xFF,0x15,INIT,INIT,INIT,INIT, // call pImLoadLibrary
+		0x85,0xC0, // test eax, eax
+		0x74,0x15, //jnz
+		0x68,INIT,INIT,INIT,INIT, // push offset pdProcName
+		0x50, // push eax
+		0xFF,0x15,INIT,INIT,INIT,INIT, // call pdImGetProcAddress
+		0x85,0xC0, // test eax, eax
+		0x90,0x90, // nop nop
+		0xA3,INIT,INIT,INIT,INIT, // mov pdProcAddress, eax
+		0x5A, // pop edx
+		0x59, // pop ecx
+		0x58, // pop eax
+		0xEB, 0xD3 // jmp @0
 	};
 
 	PatchMem(pcLoadLibraryEnd, cLoadLibrary, sizeof(cLoadLibrary));
@@ -533,7 +553,7 @@ bool SyringeDebugger::Run(char* params)
 
 		case EXCEPTION_DEBUG_EVENT:
 			continueStatus = HandleException(dbgEvent);
-			wasBP = (dbgEvent.u.Exception.ExceptionRecord.ExceptionCode = EXCEPTION_BREAKPOINT);
+			wasBP = (dbgEvent.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT);
 			break;
 
 		case LOAD_DLL_DEBUG_EVENT:
