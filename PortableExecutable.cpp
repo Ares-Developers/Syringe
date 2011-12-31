@@ -1,17 +1,22 @@
 #pragma warning(disable: 4996)	//unsafe blahblah
 
+#include <algorithm>
+#include <cassert>
+
 #include "PortableExecutable.h"
 #include "Log.h"
 
 PortableExecutable::PortableExecutable()
 {
 	lpFileName = NULL;
+	fHandle = NULL;
 }
 
 PortableExecutable::~PortableExecutable()
 {
 	if(lpFileName)
 		delete lpFileName;
+	CloseHandle();
 
 	for(size_t i = 0; i < vecImports.size(); i++)
 	{
@@ -29,7 +34,7 @@ PortableExecutable::~PortableExecutable()
 	vecImports.clear();
 }
 
-DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) //address without the image base!
+DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without the image base!
 {
 	IMAGE_SECTION_HEADER uSection;
 	for(size_t i = 0; i < vecPESections.size(); i++)
@@ -150,4 +155,69 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 	}
 
 	return false;
+}
+
+DWORD PortableExecutable::GetImageBase() const {
+	return this->GetPEHeader()->OptionalHeader.ImageBase;
+}
+
+bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {
+	if(lpFileName) {
+		assert(fHandle);
+		auto success = false;
+		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
+			success = (fread(Dest, Size, 1, fHandle) == 1);
+		}
+		return success;
+	}
+	return false;
+}
+
+bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) const {
+	if(lpFileName) {
+		assert(fHandle);
+		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
+			const size_t sz = 0x100;
+			char tmpBuf[sz];
+				
+			tmpBuf[0] = 0;
+			if(fread(tmpBuf, 1, sz, fHandle) == sz) {
+				tmpBuf[sz - 1] = 0;
+				Result.assign(tmpBuf);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findName) const {
+	const size_t slen = strlen(findName);
+	auto found = std::find_if(vecPESections.begin(), vecPESections.end(), [slen, findName](const decltype(*(vecPESections.begin())) & section) -> bool {
+		return !memcmp(findName, section.Name, slen);
+	});
+
+	if(found == vecPESections.end()) {
+		return NULL;
+	} else {
+		return &(*found);
+	}
+}
+
+void PortableExecutable::OpenHandle() {
+	if(lpFileName) {
+		if(fHandle) {
+			fclose(fHandle);
+		}
+		fHandle = fopen(lpFileName, "rb");
+	} else {
+		fHandle = NULL;
+	}
+}
+
+void PortableExecutable::CloseHandle() {
+	if(fHandle) {
+		fclose(fHandle);
+		fHandle = NULL;
+	}
 }

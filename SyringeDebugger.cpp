@@ -630,49 +630,40 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
-	PortableExecutable* pe = new PortableExecutable();
-	if(pe->ReadFile(exe))
+	PortableExecutable pe;
+	if(pe.ReadFile(exe))
 	{
-		DWORD dwImageBase = pe->GetPEHeader()->OptionalHeader.ImageBase;
+		DWORD dwImageBase = pe.GetImageBase();
 
 		//Entry point
-		pcEntryPoint = (void*)(dwImageBase + pe->GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
+		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
 
 		//Get Imports
 		pImLoadLibrary = NULL;
 		pImGetProcAddress = NULL;
 
-		std::vector<PEImport>* v = pe->GetImports();
-		for(size_t i = 0; i < v->size(); i++)
-		{
-			if(_strcmpi(v->at(i).lpName, "KERNEL32.DLL") == 0)
-			{
+		std::vector<PEImport>* v = pe.GetImports();
+		for(size_t i = 0; i < v->size(); i++) {
+			if(_strcmpi(v->at(i).lpName, "KERNEL32.DLL") == 0) {
 				std::vector<PEThunkData>* u = &v->at(i).vecThunkData;
-				for(size_t k = 0; k < u->size(); k++)
-				{
-					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0)
+				for(size_t k = 0; k < u->size(); k++) {
+					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0) {
 						pImGetProcAddress = (void*)(dwImageBase + u->at(k).Address);
-					else if(_strcmpi(u->at(k).lpName, "LOADLIBRARYA") == 0)
+					} else if(_strcmpi(u->at(k).lpName, "LOADLIBRARYA") == 0) {
 						pImLoadLibrary =(void*)(dwImageBase + u->at(k).Address);
+					}
 				}
 			}
 		}
 
-		if(!pImGetProcAddress || !pImLoadLibrary)
-		{
+		if(!pImGetProcAddress || !pImLoadLibrary) {
 			Log::SelWriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
-			delete pe;
 			return false;
 		}
-	}
-	else
-	{
+	} else {
 		Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Failed to open the executable!");
-		delete pe;
 		return false;
 	}
-
-	delete pe;
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
 	Log::SelWriteLine("\texe = %s", exe);
@@ -691,82 +682,127 @@ void SyringeDebugger::FindDLLs()
 {
 	bpMap.clear();
 
-	if(bControlLoaded)
-	{
+	if(bControlLoaded) {
 		WIN32_FIND_DATA find;
 		HANDLE hFind = FindFirstFile("*.dll", &find);
 		bool bFindMore = (hFind != INVALID_HANDLE_VALUE);
 
-		while(bFindMore)
-		{
+		while(bFindMore) {
 			char fn[0x100] = "\0";
-			char fn_inj[0x100] = "\0";
 			strncpy(fn, find.cFileName, 0x100);
-			strcpy(fn_inj, fn);
 
-			strcat(fn_inj, ".inj");
+//			Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn);
 
-			char line[0x100] = "\0";
-			FILE* F = fopen(fn_inj, "r");
-			if(F)
-			{
-				while(fgets(line, 0x100, F))
-				{
-					if(*line != ';' && *line != '\r' && *line != '\n')
-					{
-						char* func = strchr(line, '=');
-						if(func)
-						{
-							*func++ = 0;
+			PortableExecutable DLL;
+			if(DLL.ReadFile(fn)) {
+				DLL.OpenHandle();
+				DWORD dwImageBase = DLL.GetImageBase();
+				auto hosts = DLL.FindSection(".syexe00");
 
-							char* over = strchr(func, ',');
+				bool canLoad = true;
+				
+				if(hosts) {
+					canLoad = CanHostDLL(DLL, *hosts);
+				}
 
-							void* eip;
-							int n_over = 0;
+				if(canLoad) {
+					auto hooks = DLL.FindSection(".syhks00");
 
-							sscanf(line, "%X", &eip);
-
-							while(*func==' ' || *func=='\t')
-								++func;
-
-							func=strtok(func, " \t;,\r\n");
-
-							if(over)
-							{
-								if(*++over)
-									sscanf(over, "%X", &n_over);
-							}
-
-							Hook hook;
-							strncpy(hook.lib, fn, MAX_NAME_LENGTH);
-							strncpy(hook.proc, func, MAX_NAME_LENGTH);
-							hook.proc_address = NULL;
-							hook.num_overridden = n_over;
-
-							bpMap[eip].p_caller_code = NULL;
-							bpMap[eip].hooks.push_back(hook);
-							bpMap[eip].original_opcode = 0x00;
+					if(hooks) {
+						if(ParseHooksSection(DLL, *hooks)) {
+							Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn);
 						}
 					}
-				}
-				fclose(F);
-
-				//summarize all hooks
-				v_AllHooks.clear();
-				for(BPMapType::iterator it = bpMap.begin(); it != bpMap.end(); it++)
-				{
-					for(size_t i = 0; i < it->second.hooks.size(); i++)
-						v_AllHooks.push_back(&it->second.hooks[i]);
+				} else {
+					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn);
 				}
 
-				Log::SelWriteLine("SyringeDebugger::FindDLLs: Recognized DLL: \"%s\"", fn);
+				DLL.CloseHandle();
+
+//			} else {
+//				Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn);
 			}
 
-			bFindMore=(FindNextFile(hFind, &find) != 0);
+			bFindMore = (FindNextFile(hFind, &find) != 0);
 		}
 		FindClose(hFind);
 
-		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", bpMap.size());
+		// summarize all hooks
+		v_AllHooks.clear();
+		for(auto it = bpMap.begin(); it != bpMap.end(); it++) {
+			auto &h = it->second.hooks;
+			for(size_t i = 0; i < h.size(); i++) {
+				v_AllHooks.push_back(&h[i]);
+			}
+		}
+
+
+		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
 		Log::SelWriteLine();
 	}
+}
+
+bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const {
+	auto hostSz = sizeof(hostdecl);
+	auto hostCount = hosts.SizeOfRawData / hostSz;
+	auto hostsPtr = hosts.PointerToRawData;
+	for(decltype(hostCount) ix = 0; ix < hostCount; ++ix) {
+		hostdecl h;
+		if(DLL.ReadBytes(hostsPtr, hostSz, reinterpret_cast<void *>(&h))) {
+			hostsPtr += hostSz;
+			if(h.hostNamePtr) {
+				auto rawHostNamePtr = DLL.VirtualToRaw(h.hostNamePtr - DLL.GetImageBase());
+				std::string hostName;
+				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
+					hostName += ".exe";
+					if(!strcmpi(hostName.c_str(), exe)) {
+						return true;
+					}
+				}
+
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+	return false;
+}
+
+bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks) {
+	auto Sz = sizeof(hookdecl);
+	auto Count = hooks.SizeOfRawData / Sz;
+	auto Ptr = hooks.PointerToRawData;
+	
+	for(decltype(Count) ix = 0; ix < Count; ++ix) {
+		hookdecl h;
+		if(DLL.ReadBytes(Ptr, Sz, reinterpret_cast<void *>(&h))) {
+			Ptr += Sz;
+			if(h.hookNamePtr) {
+				auto rawHookNamePtr = DLL.VirtualToRaw(h.hookNamePtr - DLL.GetImageBase());
+				std::string hookName;
+				if(DLL.ReadCString(rawHookNamePtr, hookName)) {
+					Hook hook;
+					strncpy(hook.lib, DLL.GetFilename(), MAX_NAME_LENGTH);
+					strncpy(hook.proc, hookName.c_str(), MAX_NAME_LENGTH);
+					hook.proc_address = NULL;
+					hook.num_overridden = h.hookSize;
+
+					auto eip = reinterpret_cast<void *>(h.hookAddr);
+					auto &mapNode = bpMap[eip];
+
+					mapNode.p_caller_code = NULL;
+					mapNode.hooks.push_back(hook);
+					mapNode.original_opcode = 0x00;
+				}
+				// else - msvc linker inserts arbitrary padding between variables that come from different .cpps
+			}
+		} else {
+			Log::SelWriteLine(__FUNCTION__ ": Bytes read failed");
+			return false;
+		}
+	}
+
+	return true;
 }
