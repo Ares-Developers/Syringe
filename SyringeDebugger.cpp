@@ -5,6 +5,8 @@
 #include "SyringeDebugger.h"
 #include "Log.h"
 
+#include <fstream>
+
 using namespace std;
 
 SyringeDebugger::SyringeDebugger()
@@ -645,11 +647,19 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 
 	delete pe;
 
+	// read meta information
+	ifstream is;
+	is.open(exe, ifstream::binary);
+	is.seekg(0, ifstream::end);
+	dwExeSize = static_cast<DWORD>(is.tellg());
+	is.close();
+
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
 	Log::SelWriteLine("\texe = %s", exe);
 	Log::SelWriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
 	Log::SelWriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
 	Log::SelWriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
+	Log::SelWriteLine("\tdwExeSize = 0x%08X", dwExeSize);
 	Log::SelWriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
 	Log::SelWriteLine();
 

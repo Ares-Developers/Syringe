@@ -91,6 +91,7 @@ private:
 	void* pImGetProcAddress;
 	BYTE* pAlloc;
 	DWORD dwTimeStamp;
+	DWORD dwExeSize;
 
 	bool bControlLoaded;
 	bool bDLLsLoaded;
