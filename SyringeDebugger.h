@@ -92,6 +92,7 @@ private:
 	BYTE* pAlloc;
 	DWORD dwTimeStamp;
 	DWORD dwExeSize;
+	DWORD dwExeCRC;
 
 	bool bControlLoaded;
 	bool bDLLsLoaded;

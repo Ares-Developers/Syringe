@@ -4,6 +4,7 @@
 
 #include "SyringeDebugger.h"
 #include "Log.h"
+#include "CRC32.h"
 
 #include <fstream>
 
@@ -647,11 +648,19 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 
 	delete pe;
 
-	// read meta information
+	// read meta information: size and checksum
 	ifstream is;
 	is.open(exe, ifstream::binary);
 	is.seekg(0, ifstream::end);
 	dwExeSize = static_cast<DWORD>(is.tellg());
+	is.seekg(0, ifstream::beg);
+
+	CRC32 crc;
+	char buffer[0x1000];
+	while(std::streamsize read = is.read(buffer, sizeof(buffer)).gcount()) {
+		crc.compute(buffer, read);
+	}	
+	dwExeCRC =  crc.value();
 	is.close();
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
@@ -660,6 +669,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 	Log::SelWriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
 	Log::SelWriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
 	Log::SelWriteLine("\tdwExeSize = 0x%08X", dwExeSize);
+	Log::SelWriteLine("\tdwExeCRC = 0x%08X", dwExeCRC);
 	Log::SelWriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
 	Log::SelWriteLine();
 
