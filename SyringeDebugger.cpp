@@ -603,6 +603,9 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 	{
 		DWORD dwImageBase = pe->GetPEHeader()->OptionalHeader.ImageBase;
 
+		//Creation time stamp
+		dwTimeStamp = pe->GetPEHeader()->FileHeader.TimeDateStamp;
+
 		//Entry point
 		pcEntryPoint = (void*)(dwImageBase + pe->GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
 
@@ -647,6 +650,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 	Log::SelWriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
 	Log::SelWriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
 	Log::SelWriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
+	Log::SelWriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
 	Log::SelWriteLine();
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe);

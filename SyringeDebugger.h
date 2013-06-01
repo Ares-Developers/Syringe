@@ -90,6 +90,7 @@ private:
 	void* pImLoadLibrary;
 	void* pImGetProcAddress;
 	BYTE* pAlloc;
+	DWORD dwTimeStamp;
 
 	bool bControlLoaded;
 	bool bDLLsLoaded;
