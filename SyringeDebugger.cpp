@@ -742,21 +742,22 @@ void SyringeDebugger::FindDLLs()
 					}
 				}
 				fclose(F);
-
-				//summarize all hooks
-				v_AllHooks.clear();
-				for(BPMapType::iterator it = bpMap.begin(); it != bpMap.end(); it++)
-				{
-					for(size_t i = 0; i < it->second.hooks.size(); i++)
-						v_AllHooks.push_back(&it->second.hooks[i]);
-				}
-
 				Log::SelWriteLine("SyringeDebugger::FindDLLs: Recognized DLL: \"%s\"", fn);
 			}
 
 			bFindMore=(FindNextFile(hFind, &find) != 0);
 		}
 		FindClose(hFind);
+
+		// summarize all hooks
+		v_AllHooks.clear();
+		for(BPMapType::iterator it = bpMap.begin(); it != bpMap.end(); it++)
+		{
+			std::vector<Hook> &h = it->second.hooks;
+			for(size_t i = 0; i < h.size(); i++) {
+				v_AllHooks.push_back(&h[i]);
+			}
+		}
 
 		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", bpMap.size());
 		Log::SelWriteLine();
