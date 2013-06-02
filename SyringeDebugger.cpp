@@ -692,56 +692,9 @@ void SyringeDebugger::FindDLLs()
 		while(bFindMore)
 		{
 			char fn[0x100] = "\0";
-			char fn_inj[0x100] = "\0";
 			strncpy(fn, find.cFileName, 0x100);
-			strcpy(fn_inj, fn);
 
-			strcat(fn_inj, ".inj");
-
-			char line[0x100] = "\0";
-			FILE* F = fopen(fn_inj, "r");
-			if(F)
-			{
-				while(fgets(line, 0x100, F))
-				{
-					if(*line != ';' && *line != '\r' && *line != '\n')
-					{
-						char* func = strchr(line, '=');
-						if(func)
-						{
-							*func++ = 0;
-
-							char* over = strchr(func, ',');
-
-							void* eip;
-							int n_over = 0;
-
-							sscanf(line, "%X", &eip);
-
-							while(*func==' ' || *func=='\t')
-								++func;
-
-							func=strtok(func, " \t;,\r\n");
-
-							if(over)
-							{
-								if(*++over)
-									sscanf(over, "%X", &n_over);
-							}
-
-							Hook hook;
-							strncpy(hook.lib, fn, MAX_NAME_LENGTH);
-							strncpy(hook.proc, func, MAX_NAME_LENGTH);
-							hook.proc_address = NULL;
-							hook.num_overridden = n_over;
-
-							bpMap[eip].p_caller_code = NULL;
-							bpMap[eip].hooks.push_back(hook);
-							bpMap[eip].original_opcode = 0x00;
-						}
-					}
-				}
-				fclose(F);
+			if(ParseInjFileHooks(fn)) {
 				Log::SelWriteLine("SyringeDebugger::FindDLLs: Recognized DLL: \"%s\"", fn);
 			}
 
@@ -762,4 +715,55 @@ void SyringeDebugger::FindDLLs()
 		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", bpMap.size());
 		Log::SelWriteLine();
 	}
+}
+
+bool SyringeDebugger::ParseInjFileHooks(const char* fn) {
+	char fn_inj[0x100] = "\0";
+	strcpy(fn_inj, fn);
+	strcat(fn_inj, ".inj");
+
+	char line[0x100] = "\0";
+	if(FILE* F = fopen(fn_inj, "r")) {
+		while(fgets(line, 0x100, F)) {
+			if(*line != ';' && *line != '\r' && *line != '\n') {
+				if(char* func = strchr(line, '=')) {
+					*func++ = 0;
+
+					char* over = strchr(func, ',');
+
+					void* eip;
+					int n_over = 0;
+
+					sscanf(line, "%X", &eip);
+
+					while(*func==' ' || *func=='\t') {
+						++func;
+					}
+
+					func=strtok(func, " \t;,\r\n");
+
+					if(over) {
+						if(*++over) {
+							sscanf(over, "%X", &n_over);
+						}
+					}
+
+					Hook hook;
+					strncpy(hook.lib, fn, MAX_NAME_LENGTH);
+					strncpy(hook.proc, func, MAX_NAME_LENGTH);
+					hook.proc_address = NULL;
+					hook.num_overridden = n_over;
+
+					bpMap[eip].p_caller_code = NULL;
+					bpMap[eip].hooks.push_back(hook);
+					bpMap[eip].original_opcode = 0x00;
+				}
+			}
+		}
+		fclose(F);
+
+		return true;
+	}
+
+	return false;
 }

@@ -121,4 +121,6 @@ private:
 	//Code addresses
 	BYTE* pcLoadLibrary;
 	BYTE* pcLoadLibraryEnd;
+
+	bool ParseInjFileHooks(const char* fn);
 };
