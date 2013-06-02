@@ -694,8 +694,23 @@ void SyringeDebugger::FindDLLs()
 			char fn[0x100] = "\0";
 			strncpy(fn, find.cFileName, 0x100);
 
-			if(ParseInjFileHooks(fn)) {
+			HookBuffer buffer;
+
+			if(ParseInjFileHooks(fn, buffer)) {
 				Log::SelWriteLine("SyringeDebugger::FindDLLs: Recognized DLL: \"%s\"", fn);
+
+				for(HookBufferType::iterator it = buffer.hooks.begin(); it != buffer.hooks.end(); ++it)
+				{
+					void* eip = it->first;
+					BPInfo &h = bpMap[eip];
+					h.p_caller_code = NULL;
+					h.original_opcode = 0x00;
+
+					for(std::vector<Hook>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+					{
+						h.hooks.push_back(*it2);
+					}
+				}
 			}
 
 			bFindMore=(FindNextFile(hFind, &find) != 0);
@@ -717,7 +732,7 @@ void SyringeDebugger::FindDLLs()
 	}
 }
 
-bool SyringeDebugger::ParseInjFileHooks(const char* fn) {
+bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
 	char fn_inj[0x100] = "\0";
 	strcpy(fn_inj, fn);
 	strcat(fn_inj, ".inj");
@@ -748,15 +763,7 @@ bool SyringeDebugger::ParseInjFileHooks(const char* fn) {
 						}
 					}
 
-					Hook hook;
-					strncpy(hook.lib, fn, MAX_NAME_LENGTH);
-					strncpy(hook.proc, func, MAX_NAME_LENGTH);
-					hook.proc_address = NULL;
-					hook.num_overridden = n_over;
-
-					bpMap[eip].p_caller_code = NULL;
-					bpMap[eip].hooks.push_back(hook);
-					bpMap[eip].original_opcode = 0x00;
+					hooks.add(eip, fn, func, n_over);
 				}
 			}
 		}

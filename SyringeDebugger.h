@@ -122,5 +122,25 @@ private:
 	BYTE* pcLoadLibrary;
 	BYTE* pcLoadLibraryEnd;
 
-	bool ParseInjFileHooks(const char* fn);
+	typedef std::map<void*, std::vector<Hook>> HookBufferType;
+	struct HookBuffer {
+		HookBufferType hooks;
+
+		void add(void* eip, Hook &hook) {
+			auto &h = hooks[eip];
+			h.push_back(hook);
+		}
+
+		void add(void* eip, const char* filename, const char* proc, int num_overridden) {
+			Hook hook;
+			strncpy(hook.lib, filename, MAX_NAME_LENGTH);
+			strncpy(hook.proc, proc, MAX_NAME_LENGTH);
+			hook.proc_address = nullptr;
+			hook.num_overridden = num_overridden;
+
+			add(eip, hook);
+		}
+	};
+
+	bool ParseInjFileHooks(const char* fn, HookBuffer &hooks);
 };
