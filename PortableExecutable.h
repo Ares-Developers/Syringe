@@ -44,23 +44,38 @@ private:
 
 	//Imports
 	std::vector<PEImport>		vecImports;
-	
-	//Helpers
-	DWORD VirtualToRaw(DWORD dwAddress);
 
+	FILE* fHandle;
+	
 public:
 	PortableExecutable();
 	~PortableExecutable();
 
 	bool ReadFile(const char*);
 
+	const char * GetFilename() const { return lpFileName; }
+
 	//PE
-	const IMAGE_DOS_HEADER* GetDOSHeader(){return &uDOSHeader;}
-	const IMAGE_NT_HEADERS* GetPEHeader(){return &uPEHeader;}
+	const IMAGE_DOS_HEADER* GetDOSHeader() const { return &uDOSHeader; }
+	const IMAGE_NT_HEADERS* GetPEHeader() const { return &uPEHeader; }
 
 	//Sections
-	std::vector<IMAGE_SECTION_HEADER>*	GetSections(){return &vecPESections;}
-	std::vector<PEImport>*				GetImports(){return &vecImports;}
+	std::vector<IMAGE_SECTION_HEADER>*	GetSections() { return &vecPESections; }
+	std::vector<PEImport>*				GetImports() { return &vecImports; }
+
+	//Helpers
+	DWORD GetImageBase() const;
+
+	DWORD VirtualToRaw(DWORD dwAddress) const;
+
+	bool ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const;
+
+	bool ReadCString(DWORD dwRawAddress, std::string &result) const;
+
+	const IMAGE_SECTION_HEADER * FindSection(const char * findName) const;
+
+	void OpenHandle();
+	void CloseHandle();
 };
 
 #endif

@@ -143,4 +143,21 @@ private:
 	};
 
 	bool ParseInjFileHooks(const char* fn, HookBuffer &hooks);
+	bool CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const;
+	bool ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer);
 };
+
+#pragma pack(push, 16)
+
+__declspec(align(16)) struct hookdecl {
+	unsigned int hookAddr;
+	unsigned int hookSize;
+	DWORD hookNamePtr;
+};
+
+__declspec(align(16)) struct hostdecl {
+	unsigned int hostChecksum;
+	DWORD hostNamePtr;
+};
+
+#pragma pack(pop)

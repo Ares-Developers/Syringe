@@ -7,6 +7,7 @@
 #include "CRC32.h"
 
 #include <fstream>
+#include <DbgHelp.h>
 
 using namespace std;
 
@@ -420,6 +421,36 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			}
 			Log::SelWriteLine();
 
+
+			Log::SelWriteLine("Making crash dump:\n");
+				MINIDUMP_EXCEPTION_INFORMATION expParam;
+				expParam.ThreadId = dbgEvent.dwThreadId;
+				EXCEPTION_POINTERS ep;
+				ep.ExceptionRecord = const_cast<PEXCEPTION_RECORD>(&dbgEvent.u.Exception.ExceptionRecord);
+				ep.ContextRecord = &context;
+				expParam.ExceptionPointers = &ep;
+				expParam.ClientPointers = FALSE;
+
+				wchar_t filename[MAX_PATH];
+				wchar_t path[MAX_PATH];
+				SYSTEMTIME time;
+
+				GetLocalTime(&time);
+				GetCurrentDirectoryW(MAX_PATH, path);
+
+				swprintf(filename, MAX_PATH, L"%s\\syringe.crashed.%04u%02u%02u-%02u%02u%02u.dmp",
+					path, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+
+				HANDLE dumpFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE,
+					FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, NULL);
+
+				MINIDUMP_TYPE type = (MINIDUMP_TYPE)MiniDumpWithFullMemory;
+
+				MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, NULL, NULL);
+				CloseHandle(dumpFile); 
+				
+				Log::SelWriteLine("Crash dump generated.\n");
+
 			bAVLogged = true;
 		}
 
@@ -601,52 +632,43 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
-	PortableExecutable* pe = new PortableExecutable();
-	if(pe->ReadFile(exe))
+	PortableExecutable pe;
+	if(pe.ReadFile(exe))
 	{
-		DWORD dwImageBase = pe->GetPEHeader()->OptionalHeader.ImageBase;
+		DWORD dwImageBase = pe.GetImageBase();
 
 		//Creation time stamp
 		dwTimeStamp = pe->GetPEHeader()->FileHeader.TimeDateStamp;
 
 		//Entry point
-		pcEntryPoint = (void*)(dwImageBase + pe->GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
+		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
 
 		//Get Imports
 		pImLoadLibrary = NULL;
 		pImGetProcAddress = NULL;
 
-		std::vector<PEImport>* v = pe->GetImports();
-		for(size_t i = 0; i < v->size(); i++)
-		{
-			if(_strcmpi(v->at(i).lpName, "KERNEL32.DLL") == 0)
-			{
+		std::vector<PEImport>* v = pe.GetImports();
+		for(size_t i = 0; i < v->size(); i++) {
+			if(_strcmpi(v->at(i).lpName, "KERNEL32.DLL") == 0) {
 				std::vector<PEThunkData>* u = &v->at(i).vecThunkData;
-				for(size_t k = 0; k < u->size(); k++)
-				{
-					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0)
+				for(size_t k = 0; k < u->size(); k++) {
+					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0) {
 						pImGetProcAddress = (void*)(dwImageBase + u->at(k).Address);
-					else if(_strcmpi(u->at(k).lpName, "LOADLIBRARYA") == 0)
+					} else if(_strcmpi(u->at(k).lpName, "LOADLIBRARYA") == 0) {
 						pImLoadLibrary =(void*)(dwImageBase + u->at(k).Address);
+					}
 				}
 			}
 		}
 
-		if(!pImGetProcAddress || !pImLoadLibrary)
-		{
+		if(!pImGetProcAddress || !pImLoadLibrary) {
 			Log::SelWriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
-			delete pe;
 			return false;
 		}
-	}
-	else
-	{
+	} else {
 		Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Failed to open the executable!");
-		delete pe;
 		return false;
 	}
-
-	delete pe;
 
 	// read meta information: size and checksum
 	ifstream is;
@@ -683,51 +705,75 @@ void SyringeDebugger::FindDLLs()
 {
 	bpMap.clear();
 
-	if(bControlLoaded)
-	{
+	if(bControlLoaded) {
 		WIN32_FIND_DATA find;
 		HANDLE hFind = FindFirstFile("*.dll", &find);
 		bool bFindMore = (hFind != INVALID_HANDLE_VALUE);
 
-		while(bFindMore)
-		{
+		while(bFindMore) {
 			char fn[0x100] = "\0";
 			strncpy(fn, find.cFileName, 0x100);
 
-			HookBuffer buffer;
+//			Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn);
 
-			if(ParseInjFileHooks(fn, buffer)) {
-				Log::SelWriteLine("SyringeDebugger::FindDLLs: Recognized DLL: \"%s\"", fn);
+			PortableExecutable DLL;
+			if(DLL.ReadFile(fn)) {
+				DLL.OpenHandle();
+				DWORD dwImageBase = DLL.GetImageBase();
 
-				for(HookBufferType::iterator it = buffer.hooks.begin(); it != buffer.hooks.end(); ++it)
-				{
-					void* eip = it->first;
-					BPInfo &h = bpMap[eip];
-					h.p_caller_code = NULL;
-					h.original_opcode = 0x00;
+				HookBuffer buffer;
 
-					for(std::vector<Hook>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-					{
-						h.hooks.push_back(*it2);
+				bool canLoad = false;
+				if(auto hooks = DLL.FindSection(".syhks00")) {
+					canLoad = ParseHooksSection(DLL, *hooks, buffer);
+				} else {
+					canLoad = ParseInjFileHooks(fn, buffer);
+				}
+
+				if(canLoad) {
+					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn);
+
+					if(auto hosts = DLL.FindSection(".syexe00")) {
+						canLoad = CanHostDLL(DLL, *hosts);
 					}
 				}
+
+				if(canLoad) {
+					for(HookBufferType::iterator it = buffer.hooks.begin(); it != buffer.hooks.end(); ++it)
+					{
+						void* eip = it->first;
+						auto &h = bpMap[eip];
+						h.p_caller_code = NULL;
+						h.original_opcode = 0x00;
+
+						for(std::vector<Hook>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+						{
+							h.hooks.push_back(*it2);
+						}
+					}
+				} else if(!buffer.hooks.empty()) {
+					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn);
+				}
+				DLL.CloseHandle();
+
+//			} else {
+//				Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn);
 			}
 
-			bFindMore=(FindNextFile(hFind, &find) != 0);
+			bFindMore = (FindNextFile(hFind, &find) != 0);
 		}
 		FindClose(hFind);
 
 		// summarize all hooks
 		v_AllHooks.clear();
-		for(BPMapType::iterator it = bpMap.begin(); it != bpMap.end(); it++)
-		{
-			std::vector<Hook> &h = it->second.hooks;
+		for(auto it = bpMap.begin(); it != bpMap.end(); it++) {
+			auto &h = it->second.hooks;
 			for(size_t i = 0; i < h.size(); i++) {
 				v_AllHooks.push_back(&h[i]);
 			}
 		}
 
-		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", bpMap.size());
+		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
 		Log::SelWriteLine();
 	}
 }
@@ -773,4 +819,59 @@ bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
 	}
 
 	return false;
+}
+
+bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const {
+	auto hostSz = sizeof(hostdecl);
+	auto hostCount = hosts.SizeOfRawData / hostSz;
+	auto hostsPtr = hosts.PointerToRawData;
+	for(decltype(hostCount) ix = 0; ix < hostCount; ++ix) {
+		hostdecl h;
+		if(DLL.ReadBytes(hostsPtr, hostSz, reinterpret_cast<void *>(&h))) {
+			hostsPtr += hostSz;
+			if(h.hostNamePtr) {
+				auto rawHostNamePtr = DLL.VirtualToRaw(h.hostNamePtr - DLL.GetImageBase());
+				std::string hostName;
+				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
+					hostName += ".exe";
+					if(!strcmpi(hostName.c_str(), exe)) {
+						return true;
+					}
+				}
+
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+	return false;
+}
+
+bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer) {
+	auto Sz = sizeof(hookdecl);
+	auto Count = hooks.SizeOfRawData / Sz;
+	auto Ptr = hooks.PointerToRawData;
+	
+	for(decltype(Count) ix = 0; ix < Count; ++ix) {
+		hookdecl h;
+		if(DLL.ReadBytes(Ptr, Sz, reinterpret_cast<void *>(&h))) {
+			Ptr += Sz;
+			if(h.hookNamePtr) {
+				auto rawHookNamePtr = DLL.VirtualToRaw(h.hookNamePtr - DLL.GetImageBase());
+				std::string hookName;
+				if(DLL.ReadCString(rawHookNamePtr, hookName)) {
+					auto eip = reinterpret_cast<void *>(h.hookAddr);
+					buffer.add(eip, DLL.GetFilename(), hookName.c_str(), h.hookSize);
+				}
+				// else - msvc linker inserts arbitrary padding between variables that come from different .cpps
+			}
+		} else {
+			Log::SelWriteLine(__FUNCTION__ ": Bytes read failed");
+			return false;
+		}
+	}
+
+	return true;
 }
