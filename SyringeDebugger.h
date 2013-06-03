@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <hash_map>
+#include "CRC32.h"
 
 #define	MAX_NAME_LENGTH	0x100
 #define EXE_NAME_LENGTH	0x100
@@ -125,10 +126,18 @@ private:
 	typedef std::map<void*, std::vector<Hook>> HookBufferType;
 	struct HookBuffer {
 		HookBufferType hooks;
+		CRC32 checksum;
+		size_t count;
+
+		HookBuffer() : count(0) {}
 
 		void add(void* eip, Hook &hook) {
 			auto &h = hooks[eip];
 			h.push_back(hook);
+
+			checksum.compute(&eip, sizeof(eip));
+			checksum.compute(&hook.num_overridden, sizeof(hook.num_overridden));
+			count++;
 		}
 
 		void add(void* eip, const char* filename, const char* proc, int num_overridden) {
