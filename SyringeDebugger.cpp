@@ -733,7 +733,9 @@ void SyringeDebugger::FindDLLs()
 				if(canLoad) {
 					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn);
 
-					if(auto hosts = DLL.FindSection(".syexe00")) {
+					if(Handshake(DLL.GetFilename(), buffer.count, buffer.checksum.value(), canLoad)) {
+						// canLoad has been updated already
+					} else if(auto hosts = DLL.FindSection(".syexe00")) {
 						canLoad = CanHostDLL(DLL, *hosts);
 					}
 				}
@@ -874,4 +876,55 @@ bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMA
 	}
 
 	return true;
+}
+
+// check whether the library wants to be included. if it exports a special
+// function, we initiate a handshake. if it fails, or the dll opts out,
+// the hooks aren't included. if the function is not exported, we have to
+// rely on other methods.
+bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk)
+{
+	if(HMODULE hLib = LoadLibrary(lib))
+	{
+		if(FARPROC hProc = GetProcAddress(hLib, "SyringeHandshake"))
+		{
+			Log::SelWriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
+			char buffer[0x101] = {0}; // one more than we tell the dll
+
+			SyringeHandshakeInfo shInfo;
+			memset(&shInfo, 0, sizeof(shInfo));
+			shInfo.cbSize = sizeof(shInfo);
+			shInfo.num_hooks = hooks;
+			shInfo.checksum = crc;
+			shInfo.exeFilesize = dwExeSize;
+			shInfo.exeCRC = dwExeCRC;
+			shInfo.exeTimestamp = dwTimeStamp;
+			shInfo.Message = buffer;
+			shInfo.cchMessage = sizeof(buffer) - 1;
+
+			SYRINGEHANDSHAKEFUNC func = (SYRINGEHANDSHAKEFUNC)hProc;
+			HRESULT res = func(&shInfo);
+
+			if(SUCCEEDED(res))
+			{
+				buffer[0x100] = 0;
+				Log::SelWriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer, res);
+				outOk = (res == S_OK);
+			}
+			else
+			{
+				// don't use any properties of shInfo.
+				Log::SelWriteLine("SyringeDebugger::Handshake: Failed (%X)", res);
+				outOk = false;
+			}
+
+			return true;
+		} else {
+			//Log::SelWriteLine("SyringeDebugger::Handshake: Not available.");
+		}
+
+		FreeLibrary(hLib);
+	}
+
+	return false;
 }

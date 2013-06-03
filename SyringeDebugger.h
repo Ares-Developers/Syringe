@@ -154,6 +154,7 @@ private:
 	bool ParseInjFileHooks(const char* fn, HookBuffer &hooks);
 	bool CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const;
 	bool ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer);
+	bool Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk);
 };
 
 #pragma pack(push, 16)
@@ -170,3 +171,17 @@ __declspec(align(16)) struct hostdecl {
 };
 
 #pragma pack(pop)
+
+struct SyringeHandshakeInfo
+{
+	int cbSize;
+	int num_hooks;
+	unsigned int checksum;
+	DWORD exeFilesize;
+	DWORD exeTimestamp;
+	unsigned int exeCRC;
+	int cchMessage;
+	char* Message;
+};
+
+typedef HRESULT(__cdecl *SYRINGEHANDSHAKEFUNC)(SyringeHandshakeInfo*);
