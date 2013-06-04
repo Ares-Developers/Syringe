@@ -638,7 +638,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 		DWORD dwImageBase = pe.GetImageBase();
 
 		//Creation time stamp
-		dwTimeStamp = pe->GetPEHeader()->FileHeader.TimeDateStamp;
+		dwTimeStamp = pe.GetPEHeader()->FileHeader.TimeDateStamp;
 
 		//Entry point
 		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
