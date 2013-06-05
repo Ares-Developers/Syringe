@@ -421,35 +421,36 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			}
 			Log::SelWriteLine();
 
-
+#if 0
 			Log::SelWriteLine("Making crash dump:\n");
-				MINIDUMP_EXCEPTION_INFORMATION expParam;
-				expParam.ThreadId = dbgEvent.dwThreadId;
-				EXCEPTION_POINTERS ep;
-				ep.ExceptionRecord = const_cast<PEXCEPTION_RECORD>(&dbgEvent.u.Exception.ExceptionRecord);
-				ep.ContextRecord = &context;
-				expParam.ExceptionPointers = &ep;
-				expParam.ClientPointers = FALSE;
+			MINIDUMP_EXCEPTION_INFORMATION expParam;
+			expParam.ThreadId = dbgEvent.dwThreadId;
+			EXCEPTION_POINTERS ep;
+			ep.ExceptionRecord = const_cast<PEXCEPTION_RECORD>(&dbgEvent.u.Exception.ExceptionRecord);
+			ep.ContextRecord = &context;
+			expParam.ExceptionPointers = &ep;
+			expParam.ClientPointers = FALSE;
 
-				wchar_t filename[MAX_PATH];
-				wchar_t path[MAX_PATH];
-				SYSTEMTIME time;
+			wchar_t filename[MAX_PATH];
+			wchar_t path[MAX_PATH];
+			SYSTEMTIME time;
 
-				GetLocalTime(&time);
-				GetCurrentDirectoryW(MAX_PATH, path);
+			GetLocalTime(&time);
+			GetCurrentDirectoryW(MAX_PATH, path);
 
-				swprintf(filename, MAX_PATH, L"%s\\syringe.crashed.%04u%02u%02u-%02u%02u%02u.dmp",
-					path, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+			swprintf(filename, MAX_PATH, L"%s\\syringe.crashed.%04u%02u%02u-%02u%02u%02u.dmp",
+				path, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
 
-				HANDLE dumpFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE,
-					FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, NULL);
+			HANDLE dumpFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE,
+				FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, NULL);
 
-				MINIDUMP_TYPE type = (MINIDUMP_TYPE)MiniDumpWithFullMemory;
+			MINIDUMP_TYPE type = (MINIDUMP_TYPE)MiniDumpWithFullMemory;
 
-				MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, NULL, NULL);
-				CloseHandle(dumpFile); 
+			MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, NULL, NULL);
+			CloseHandle(dumpFile); 
 				
-				Log::SelWriteLine("Crash dump generated.\n");
+			Log::SelWriteLine("Crash dump generated.\n");
+#endif
 
 			bAVLogged = true;
 		}
