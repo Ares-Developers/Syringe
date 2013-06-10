@@ -373,11 +373,13 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 		return DBG_CONTINUE;
 	}
-	else if (exceptCode == EXCEPTION_ACCESS_VIOLATION)
+	else
 	{
+		Log::SelWriteLine("SyringeDebugger::HandleException: Exception (Code: 0x%08X at 0x%08X)!", exceptCode, exceptAddr);
+
 		if(!bAVLogged)
 		{
-			Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
+			//Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
 			
 			HANDLE currentThread = (*threadInfoMap)[dbgEvent.dwThreadId].hThread;
 			CONTEXT context;
@@ -454,12 +456,6 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 			bAVLogged = true;
 		}
-
-		return DBG_EXCEPTION_NOT_HANDLED;
-	}
-	else 
-	{
-		Log::SelWriteLine("SyringeDebugger::HandleException: Exception (Code: 0x%08X at 0x%08X)!", exceptCode, exceptAddr);
 
 		return DBG_EXCEPTION_NOT_HANDLED;
 	}
