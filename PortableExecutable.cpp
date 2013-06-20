@@ -144,7 +144,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 							vecImports.push_back(current_import);
 						}
 						
-						delete import_desc;
+						delete [] import_desc;
 					}
 
 					return true;

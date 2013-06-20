@@ -276,7 +276,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 									BYTE* over = new BYTE[it->second.hooks[first].num_overridden];
 									ReadMem(it->first,over, it->second.hooks[first].num_overridden);
 									PatchMem(p_code,over, it->second.hooks[first].num_overridden);
-									delete over;
+									delete [] over;
 
 									p_code += it->second.hooks[first].num_overridden;
 								}
