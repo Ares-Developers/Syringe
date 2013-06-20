@@ -24,8 +24,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,0,0
- PRODUCTVERSION 0,6,0,0
+ FILEVERSION 0,7,0,2
+ PRODUCTVERSION 0,7,0,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -42,12 +42,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Patrick Dinklage"
             VALUE "FileDescription", "Syringe Main Executable"
-            VALUE "FileVersion", "0, 6, 0, 0"
+            VALUE "FileVersion", "0, 7, 0, 2"
             VALUE "InternalName", "Syringe"
             VALUE "LegalCopyright", "Copyright © 2008 Patrick Dinklage"
             VALUE "OriginalFilename", "Syringe.exe"
             VALUE "ProductName", "Syringe"
-            VALUE "ProductVersion", "0, 6, 0, 0"
+            VALUE "ProductVersion", "0, 7, 0, 2"
         END
     END
     BLOCK "VarFileInfo"
