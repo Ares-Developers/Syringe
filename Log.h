@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-#define LOG_FILENAME_LEN	0x200
+#define LOG_FILENAME_LEN 0x200
 
 class Log
 {
@@ -25,8 +25,8 @@ public:
 	virtual void Close();
 
 	virtual void WriteLine();
-	virtual void WriteLine(const char*,...);
-	virtual void WriteLine(const char*,va_list);
+	virtual void WriteLine(const char*, ...);
+	virtual void WriteLine(const char*, va_list);
 
 	static void Select(Log*);
 	static void Deselect();
@@ -35,7 +35,7 @@ public:
 	static void SelClose();
 
 	static void SelWriteLine();
-	static void SelWriteLine(const char*,...);
+	static void SelWriteLine(const char*, ...);
 };
 
 #endif

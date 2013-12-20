@@ -20,13 +20,13 @@ void CRC32::reset()
 
 void CRC32::initialize()
 {
-	for(int i=0; i<256; ++i)
+	for(int i = 0; i<256; ++i)
 	{
 		unsigned int value = i;
 
-		for(int j=8; j>0; --j)
+		for(int j = 8; j>0; --j)
 		{
-			if (value & 1)
+			if(value & 1)
 			{
 				value = (value >> 1) ^ polynomial;
 			}
@@ -44,7 +44,7 @@ void CRC32::initialize()
 
 unsigned int CRC32::compute(void* buffer, long long length)
 {
-	for(long long i=0; i<length; ++i)
+	for(long long i = 0; i < length; ++i)
 	{
 		unsigned char byte = static_cast<char*>(buffer)[i];
 		unsigned char index = (_value & 0xFF) ^ byte;

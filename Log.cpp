@@ -1,38 +1,39 @@
 #include "Log.h"
 
-Log* Log::sel=nullptr;
+Log* Log::sel = nullptr;
 
 Log::Log(const char* FileName)
 {
-	f=nullptr;
-	strncpy(filename,FileName,LOG_FILENAME_LEN);
+	f = nullptr;
+	strncpy(filename, FileName, LOG_FILENAME_LEN);
 }
 
 void Log::Open()
 {
 	Close();
-	if(*filename)f=fopen(filename,"w");
+	if(*filename) {
+		f = fopen(filename, "w");
+	}
 }
 
 void Log::Close()
 {
-	if(f)
-	{
+	if(f) {
 		fclose(f);
-		f=nullptr;
+		f = nullptr;
 	}
 }
 
 void Log::WriteTimestamp()
 {
-	if(f)
-	{
+	if(f) {
 		time_t raw;
 		time(&raw);
-		tm* t=localtime(&raw);
+		tm* t = localtime(&raw);
 
-		fprintf(f,"[%02d:%02d:%02d] ",t->tm_hour,t->tm_min,t->tm_sec);
-		fflush(f);fseek(f,0,SEEK_END);
+		fprintf(f, "[%02d:%02d:%02d] ", t->tm_hour, t->tm_min, t->tm_sec);
+		fflush(f);
+		fseek(f, 0, SEEK_END);
 	}
 }
 
@@ -40,21 +41,23 @@ void Log::WriteLine()
 {
 	if(f)
 	{
-		fputs("\n",f);
-		fflush(f);fseek(f,0,SEEK_END);
+		fputs("\n", f);
+		fflush(f);
+		fseek(f, 0, SEEK_END);
 	}
 }
 
 void Log::WriteLine(const char* Format, ...)
 {
-	if(f)
-	{
+	if(f) {
 		WriteTimestamp();
 
 		va_list args;
-		va_start(args,Format);
+		va_start(args, Format);
 
-		if(f)vfprintf(f,Format,args);
+		if(f) {
+			vfprintf(f, Format, args);
+		}
 
 		va_end(args);
 
@@ -62,40 +65,39 @@ void Log::WriteLine(const char* Format, ...)
 	}
 }
 
-void Log::WriteLine(const char* Format,va_list Arguments)
+void Log::WriteLine(const char* Format, va_list Arguments)
 {
-	if(f)
-	{
+	if(f) {
 		WriteTimestamp();
-		vfprintf(f,Format,Arguments);
+		vfprintf(f, Format, Arguments);
 		WriteLine();
 	}
 }
 
 void Log::Select(Log* log)
 {
-	sel=log;
+	sel = log;
 }
 
 void Log::Deselect()
 {
-	sel=nullptr;
+	sel = nullptr;
 }
 
 void Log::SelWriteLine()
 {
-	if(sel)
+	if(sel) {
 		sel->WriteLine();
+	}
 }
 
-void Log::SelWriteLine(const char* Format,...)
+void Log::SelWriteLine(const char* Format, ...)
 {
-	if(sel)
-	{
+	if(sel) {
 		va_list args;
-		va_start(args,Format);
+		va_start(args, Format);
 
-		sel->WriteLine(Format,args);
+		sel->WriteLine(Format, args);
 
 		va_end(args);
 	}
@@ -103,12 +105,14 @@ void Log::SelWriteLine(const char* Format,...)
 
 void Log::SelOpen()
 {
-	if(sel)
+	if(sel) {
 		sel->Open();
+	}
 }
 
 void Log::SelClose()
 {
-	if(sel)
+	if(sel) {
 		sel->Close();
+	}
 }

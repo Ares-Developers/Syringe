@@ -7,7 +7,7 @@ SyringeDebugger Debugger;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	Log* log=new Log("syringe.log");
+	Log* log = new Log("syringe.log");
 	Log::Select(log);
 
 	Log::SelOpen();
@@ -15,23 +15,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Log::SelWriteLine(VERSION_STRING);
 	Log::SelWriteLine("===============");
 	Log::SelWriteLine();
-	Log::SelWriteLine("WinMain: lpCmdLine = \"%s\"",lpCmdLine);
+	Log::SelWriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
 
 	if(lpCmdLine)
 	{
-		char file[0x200]="\0";
+		char file[0x200] = "\0";
 
-		if(strstr(lpCmdLine,"\"")==lpCmdLine)
+		if(strstr(lpCmdLine, "\"") == lpCmdLine)
 		{
-			char* fn=lpCmdLine+1;
-			char* args=strstr(fn,"\"");
+			char* fn = lpCmdLine + 1;
+			char* args = strstr(fn, "\"");
 
 			if(args)
 			{
-				strncpy(file,fn,(DWORD)args-(DWORD)fn);
+				strncpy(file, fn, (DWORD)args - (DWORD)fn);
 				++args;
 
-				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...",file);
+				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file);
 				Log::SelWriteLine();
 				if(Debugger.RetrieveInfo(file))
 				{
@@ -39,18 +39,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					Log::SelWriteLine();
 					Debugger.FindDLLs();
 
-					Log::SelWriteLine("WinMain: SyringeDebugger::Run(\"%s\");",args);
+					Log::SelWriteLine("WinMain: SyringeDebugger::Run(\"%s\");", args);
 					Log::SelWriteLine();
 					Debugger.Run(args);
 
-					Log::SelWriteLine("WinMain: SyringeDebugger::Run finished.",args);
+					Log::SelWriteLine("WinMain: SyringeDebugger::Run finished.", args);
 					Log::SelWriteLine("WinMain: Exiting on success.");
 					Log::SelClose();
 					return 0;
 				}
 				else
 				{
-					char msg[0x280]="\0";
+					char msg[0x280] = "\0";
 
 					sprintf(
 						msg,
@@ -61,14 +61,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						nullptr,
 						msg,
 						"Syringe",
-						MB_OK|MB_ICONERROR);
+						MB_OK | MB_ICONERROR);
 
-					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...",file);
+					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...", file);
 				}
 			}
 			else
 			{
-				char msg[0x280]="\0";
+				char msg[0x280] = "\0";
 
 				sprintf(
 					msg,
@@ -79,7 +79,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					nullptr,
 					msg,
 					"Syringe",
-					MB_OK|MB_ICONERROR);
+					MB_OK | MB_ICONERROR);
 
 				Log::SelWriteLine("WinMain: ERROR: Command line arguments could not be evaluated, exiting...");
 			}
@@ -90,12 +90,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				nullptr,
 				"Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
 				VERSION_STRING,
-				MB_OK|MB_ICONINFORMATION);
+				MB_OK | MB_ICONINFORMATION);
 
 			Log::SelWriteLine("WinMain: ERROR: No command line arguments given, exiting...");
 		}
 	}
-	
+
 	Log::SelWriteLine("WinMain: Exiting on failure.");
 	Log::SelClose();
 	return 0;

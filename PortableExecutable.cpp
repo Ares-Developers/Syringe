@@ -12,19 +12,22 @@ PortableExecutable::PortableExecutable()
 
 PortableExecutable::~PortableExecutable()
 {
-	if(lpFileName)
+	if(lpFileName) {
 		delete lpFileName;
+	}
 	CloseHandle();
 
 	for(size_t i = 0; i < vecImports.size(); i++)
 	{
-		if(vecImports[i].lpName)
+		if(vecImports[i].lpName) {
 			delete vecImports[i].lpName;
+		}
 
 		for(size_t k = 0; k < vecImports[i].vecThunkData.size(); k++)
 		{
-			if(vecImports[i].vecThunkData[k].lpName)
+			if(vecImports[i].vecThunkData[k].lpName) {
 				delete vecImports[i].vecThunkData[k].lpName;
+			}
 		}
 
 		vecImports[i].vecThunkData.clear();
@@ -38,7 +41,7 @@ DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without 
 	for(size_t i = 0; i < vecPESections.size(); i++)
 	{
 		uSection = vecPESections[i];
-		if(dwAddress >= uSection.VirtualAddress && 
+		if(dwAddress >= uSection.VirtualAddress &&
 			dwAddress < uSection.VirtualAddress + uSection.SizeOfRawData)
 		{
 			DWORD dwDifference = dwAddress - uSection.VirtualAddress;
@@ -59,7 +62,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 		if(F)
 		{
 			//DOS Header
-			fread(&uDOSHeader,sizeof(IMAGE_DOS_HEADER), 1, F);
+			fread(&uDOSHeader, sizeof(IMAGE_DOS_HEADER), 1, F);
 			if(uDOSHeader.e_magic == IMAGE_DOS_SIGNATURE)
 			{
 				//PE Header
@@ -77,7 +80,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 							vecPESections.push_back(current_section);
 						}
 					}
-				
+
 					//Imports
 					int import_desc_count = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size / sizeof(IMAGE_IMPORT_DESCRIPTOR) - 1; //minus one for end of array
 					if(import_desc_count > 0)
@@ -86,11 +89,12 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 
 						fseek(
 							F,
-							(long)VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress), 
+							(long)VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress),
 							SEEK_SET);
 
-						for(int i = 0; i < import_desc_count; i++)
+						for(int i = 0; i < import_desc_count; i++) {
 							fread(&import_desc[i], sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, F);
+						}
 
 						PEImport current_import;
 						char name_buf[0x100] = "\0";
@@ -99,7 +103,9 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 						{
 							current_import.vecThunkData.clear();
 							current_import.uDesc = import_desc[i];
-							if(!current_import.uDesc.Name)break;
+							if(!current_import.uDesc.Name) {
+								break;
+							}
 
 							fseek(F, (long)VirtualToRaw(current_import.uDesc.Name), SEEK_SET);
 							fgets(name_buf, 0x100, F);
@@ -111,7 +117,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 							current_thunk.lpName = nullptr;
 
 							fseek(F, (long)VirtualToRaw(current_import.uDesc.FirstThunk), SEEK_SET);
-							
+
 							for(fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, F);
 								current_thunk.uThunkData.u1.AddressOfData;
 								fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, F))
@@ -141,8 +147,8 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 
 							vecImports.push_back(current_import);
 						}
-						
-						delete [] import_desc;
+
+						delete[] import_desc;
 					}
 
 					return true;
@@ -177,7 +183,7 @@ bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) co
 		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
 			const size_t sz = 0x100;
 			char tmpBuf[sz];
-				
+
 			tmpBuf[0] = 0;
 			if(fread(tmpBuf, 1, sz, fHandle) == sz) {
 				tmpBuf[sz - 1] = 0;

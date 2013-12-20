@@ -25,7 +25,7 @@ public:
 	~SyringeDebugger();
 
 	//Debugger
-	bool DebugProcess(const char* exeFile,char* params);
+	bool DebugProcess(const char* exeFile, char* params);
 	bool Run(char* params);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
@@ -34,9 +34,9 @@ public:
 	void RemoveBP(void* address, bool restoreOpcode);
 
 	//Memory
-	LPVOID AllocMem(void* address,size_t size);
-	bool PatchMem(void* address,void* buffer,DWORD size);
-	bool ReadMem(void* address,void* buffer,DWORD size);
+	LPVOID AllocMem(void* address, size_t size);
+	bool PatchMem(void* address, void* buffer, DWORD size);
+	bool ReadMem(void* address, void* buffer, DWORD size);
 
 	//Syringe
 	bool RetrieveInfo(const char*);
@@ -44,7 +44,7 @@ public:
 
 private:
 	//Helper Functions
-	DWORD RelativeOffset(DWORD from,DWORD to);
+	DWORD RelativeOffset(DWORD from, DWORD to);
 
 	//ThreadInfo
 	struct threadInfo
