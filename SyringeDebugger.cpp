@@ -1,7 +1,3 @@
-#pragma warning(disable: 4786)	/*That "warning" annoyed me...
-								  I recommend using this if you use std::map -pd*/
-#pragma warning(disable: 4996)	//unsafe blahblah
-
 #include "SyringeDebugger.h"
 #include "Log.h"
 #include "CRC32.h"

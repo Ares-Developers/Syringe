@@ -1,5 +1,3 @@
-#pragma warning(disable: 4996)	//unsafe blahblah
-
 #include <algorithm>
 #include <cassert>
 

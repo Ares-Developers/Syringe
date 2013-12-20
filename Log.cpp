@@ -1,5 +1,3 @@
-#pragma warning(disable: 4996)	//unsafe blahblah
-
 #include "Log.h"
 
 Log* Log::sel=NULL;
