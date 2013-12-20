@@ -6,8 +6,8 @@
 
 PortableExecutable::PortableExecutable()
 {
-	lpFileName = NULL;
-	fHandle = NULL;
+	lpFileName = nullptr;
+	fHandle = nullptr;
 }
 
 PortableExecutable::~PortableExecutable()
@@ -108,7 +108,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 
 							//Thunks
 							PEThunkData current_thunk;
-							current_thunk.lpName = NULL;
+							current_thunk.lpName = nullptr;
 
 							fseek(F, (long)VirtualToRaw(current_import.uDesc.FirstThunk), SEEK_SET);
 							
@@ -196,7 +196,7 @@ const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findNam
 	});
 
 	if(found == vecPESections.end()) {
-		return NULL;
+		return nullptr;
 	} else {
 		return &(*found);
 	}
@@ -209,13 +209,13 @@ void PortableExecutable::OpenHandle() {
 		}
 		fHandle = fopen(lpFileName, "rb");
 	} else {
-		fHandle = NULL;
+		fHandle = nullptr;
 	}
 }
 
 void PortableExecutable::CloseHandle() {
 	if(fHandle) {
 		fclose(fHandle);
-		fHandle = NULL;
+		fHandle = nullptr;
 	}
 }

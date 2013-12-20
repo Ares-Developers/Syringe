@@ -15,19 +15,19 @@ SyringeDebugger::SyringeDebugger()
 	bAttached=false;
 	bEntryBP=true;
 
-	pcEntryPoint=NULL;
-	pcLoadLibrary=NULL;
-	pcLoadLibraryEnd=NULL;
+	pcEntryPoint=nullptr;
+	pcLoadLibrary=nullptr;
+	pcLoadLibraryEnd=nullptr;
 
 	pImLoadLibrary=0;
 	pImGetProcAddress=0;
-	pAlloc=NULL;
+	pAlloc=nullptr;
 	*exe=0;
 
 	bControlLoaded=false;
 	bDLLsLoaded=false;
 	v_AllHooks.clear();
-	pLastBP=NULL;
+	pLastBP=nullptr;
 }
 
 SyringeDebugger::~SyringeDebugger()
@@ -47,9 +47,9 @@ bool SyringeDebugger::DebugProcess(const char* exeFile,char* params)
 	startupInfo.cb=sizeof(startupInfo);
 
 	bool retVal=(CreateProcess(
-		exeFile,params,NULL,NULL,false, 
+		exeFile,params,nullptr,nullptr,false, 
 		DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED, 
-		NULL,NULL,&startupInfo,&pInfo)!=0);
+		nullptr,nullptr,&startupInfo,&pInfo)!=0);
 
 	bAttached = retVal;
 	return retVal;
@@ -57,7 +57,7 @@ bool SyringeDebugger::DebugProcess(const char* exeFile,char* params)
 
 bool SyringeDebugger::PatchMem(void* address,void* buffer,DWORD size)
 {
-	return (WriteProcessMemory(pInfo.hProcess,address,buffer,size,NULL)==TRUE);
+	return (WriteProcessMemory(pInfo.hProcess,address,buffer,size,nullptr)==TRUE);
 }
 
 bool SyringeDebugger::ReadMem(void* address,void* buffer,DWORD size)
@@ -235,7 +235,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 							//should provide the same information to be secure
 							sz += it->second.hooks[first].num_overridden;
 
-							BYTE* p_code_base = (BYTE*)AllocMem(NULL,sz);
+							BYTE* p_code_base = (BYTE*)AllocMem(nullptr,sz);
 							BYTE* p_code = p_code_base;
 
 							if(p_code_base)
@@ -440,11 +440,11 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				path, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
 
 			HANDLE dumpFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE,
-				FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, NULL);
+				FILE_SHARE_WRITE | FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, nullptr);
 
 			MINIDUMP_TYPE type = (MINIDUMP_TYPE)MiniDumpWithFullMemory;
 
-			MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, NULL, NULL);
+			MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, nullptr, nullptr);
 			CloseHandle(dumpFile); 
 				
 			Log::SelWriteLine("Crash dump generated.\n");
@@ -470,7 +470,7 @@ bool SyringeDebugger::Run(char* params)
 		return false;
 
 	Log::SelWriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
-	pAlloc = (BYTE*)AllocMem(NULL, 0x1000);
+	pAlloc = (BYTE*)AllocMem(nullptr, 0x1000);
 
 	Log::SelWriteLine("SyringeDebugger::Run: pAlloc = 0x%08X",pAlloc);
 
@@ -565,13 +565,13 @@ bool SyringeDebugger::Run(char* params)
 			pInfo.hThread = dbgEvent.u.CreateProcessInfo.hThread;
 			pInfo.dwThreadId = dbgEvent.dwThreadId;
 			(*threadInfoMap)[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateProcessInfo.hThread;
-			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = NULL;
+			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = nullptr;
 			CloseHandle(dbgEvent.u.CreateProcessInfo.hFile); 
 			break;
 
 		case CREATE_THREAD_DEBUG_EVENT:
 			(*threadInfoMap)[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateThread.hThread;
-			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = NULL;
+			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = nullptr;
 			break;
 
 		case EXIT_THREAD_DEBUG_EVENT:
@@ -637,8 +637,8 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
 
 		//Get Imports
-		pImLoadLibrary = NULL;
-		pImGetProcAddress = NULL;
+		pImLoadLibrary = nullptr;
+		pImGetProcAddress = nullptr;
 
 		std::vector<PEImport>* v = pe.GetImports();
 		for(size_t i = 0; i < v->size(); i++) {
@@ -738,7 +738,7 @@ void SyringeDebugger::FindDLLs()
 					{
 						void* eip = it->first;
 						auto &h = bpMap[eip];
-						h.p_caller_code = NULL;
+						h.p_caller_code = nullptr;
 						h.original_opcode = 0x00;
 
 						for(std::vector<Hook>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)

@@ -1,10 +1,10 @@
 #include "Log.h"
 
-Log* Log::sel=NULL;
+Log* Log::sel=nullptr;
 
 Log::Log(const char* FileName)
 {
-	f=NULL;
+	f=nullptr;
 	strncpy(filename,FileName,LOG_FILENAME_LEN);
 }
 
@@ -19,7 +19,7 @@ void Log::Close()
 	if(f)
 	{
 		fclose(f);
-		f=NULL;
+		f=nullptr;
 	}
 }
 
@@ -79,7 +79,7 @@ void Log::Select(Log* log)
 
 void Log::Deselect()
 {
-	sel=NULL;
+	sel=nullptr;
 }
 
 void Log::SelWriteLine()

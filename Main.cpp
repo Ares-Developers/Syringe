@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						file);
 
 					MessageBoxA(
-						NULL,
+						nullptr,
 						msg,
 						"Syringe",
 						MB_OK|MB_ICONERROR);
@@ -76,7 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					lpCmdLine);
 
 				MessageBoxA(
-					NULL,
+					nullptr,
 					msg,
 					"Syringe",
 					MB_OK|MB_ICONERROR);
@@ -87,7 +87,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		else
 		{
 			MessageBoxA(
-				NULL,
+				nullptr,
 				"Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
 				VERSION_STRING,
 				MB_OK|MB_ICONINFORMATION);
