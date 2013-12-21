@@ -721,7 +721,7 @@ void SyringeDebugger::FindDLLs()
 				if(auto hooks = DLL.FindSection(".syhks00")) {
 					canLoad = ParseHooksSection(DLL, *hooks, buffer);
 				} else {
-					canLoad = ParseInjFileHooks(fn.c_str(), buffer);
+					canLoad = ParseInjFileHooks(fn, buffer);
 				}
 
 				if(canLoad) {
@@ -774,10 +774,10 @@ void SyringeDebugger::FindDLLs()
 	}
 }
 
-bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
-	std::string fn_inj = fn + std::string(".inj");
+bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hooks) {
+	std::string inj = lib + ".inj";
 
-	if(FILE* F = _fsopen(fn_inj.c_str(), "r", _SH_DENYWR)) {
+	if(FILE* F = _fsopen(inj.c_str(), "r", _SH_DENYWR)) {
 		char line[0x100] = "\0";
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
@@ -804,7 +804,7 @@ bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
 						}
 					}
 
-					hooks.add(eip, fn, func, n_over);
+					hooks.add(eip, lib.c_str(), func, n_over);
 				}
 			}
 		}

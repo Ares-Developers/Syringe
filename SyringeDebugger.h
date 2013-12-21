@@ -151,7 +151,7 @@ private:
 		}
 	};
 
-	bool ParseInjFileHooks(const char* fn, HookBuffer &hooks);
+	bool ParseInjFileHooks(const std::string &lib, HookBuffer &hooks);
 	bool CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const;
 	bool ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer);
 	bool Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk);
