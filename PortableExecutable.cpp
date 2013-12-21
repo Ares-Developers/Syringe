@@ -14,20 +14,20 @@ PortableExecutable::PortableExecutable()
 PortableExecutable::~PortableExecutable()
 {
 	if(lpFileName) {
-		delete lpFileName;
+		free(lpFileName);
 	}
 	CloseHandle();
 
 	for(size_t i = 0; i < vecImports.size(); i++)
 	{
 		if(vecImports[i].lpName) {
-			delete vecImports[i].lpName;
+			free(vecImports[i].lpName);
 		}
 
 		for(size_t k = 0; k < vecImports[i].vecThunkData.size(); k++)
 		{
 			if(vecImports[i].vecThunkData[k].lpName) {
-				delete vecImports[i].vecThunkData[k].lpName;
+				free(vecImports[i].vecThunkData[k].lpName);
 			}
 		}
 
