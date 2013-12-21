@@ -271,10 +271,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//should provide the same information to be secure
 								if(it->second.hooks[first].num_overridden > 0)
 								{
-									BYTE* over = new BYTE[it->second.hooks[first].num_overridden];
-									ReadMem(it->first, over, it->second.hooks[first].num_overridden);
-									PatchMem(p_code, over, it->second.hooks[first].num_overridden);
-									delete[] over;
+									std::vector<BYTE> over(it->second.hooks[first].num_overridden);
+									ReadMem(it->first, over.data(), it->second.hooks[first].num_overridden);
+									PatchMem(p_code, over.data(), it->second.hooks[first].num_overridden);
 
 									p_code += it->second.hooks[first].num_overridden;
 								}

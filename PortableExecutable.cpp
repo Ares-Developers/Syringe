@@ -85,7 +85,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 					int import_desc_count = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size / sizeof(IMAGE_IMPORT_DESCRIPTOR) - 1; //minus one for end of array
 					if(import_desc_count > 0)
 					{
-						IMAGE_IMPORT_DESCRIPTOR* import_desc = new IMAGE_IMPORT_DESCRIPTOR[import_desc_count];
+						std::vector<IMAGE_IMPORT_DESCRIPTOR> import_desc(import_desc_count);
 
 						fseek(
 							F,
@@ -147,8 +147,6 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 
 							vecImports.push_back(current_import);
 						}
-
-						delete[] import_desc;
 					}
 
 					return true;
