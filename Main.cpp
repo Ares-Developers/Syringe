@@ -1,7 +1,7 @@
 #include "SyringeDebugger.h"
 #include "Log.h"
 
-#define VERSION_STRING	"Syringe 0.7.0.2"
+#define VERSION_STRING	"Syringe 0.7.0.3"
 
 SyringeDebugger Debugger;
 
