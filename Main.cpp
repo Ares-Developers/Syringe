@@ -19,8 +19,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if(lpCmdLine)
 	{
-		char file[0x200] = "\0";
-
 		if(strstr(lpCmdLine, "\"") == lpCmdLine)
 		{
 			char* fn = lpCmdLine + 1;
@@ -28,7 +26,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if(args)
 			{
-				strncpy(file, fn, (DWORD)args - (DWORD)fn);
+				char file[0x200] = "\0";
+				strncpy_s(file, fn, args - fn);
 				++args;
 
 				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file);
@@ -51,17 +50,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else
 				{
 					char msg[0x280] = "\0";
+					sprintf_s(msg, "Fatal Error:\r\nCould not load executable file: \"%s\"", file);
 
-					sprintf(
-						msg,
-						"Fatal Error:\r\nCould not load executable file: \"%s\"",
-						file);
-
-					MessageBoxA(
-						nullptr,
-						msg,
-						"Syringe",
-						MB_OK | MB_ICONERROR);
+					MessageBoxA(nullptr, msg, "Syringe", MB_OK | MB_ICONERROR);
 
 					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...", file);
 				}
@@ -69,28 +60,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else
 			{
 				char msg[0x280] = "\0";
+				sprintf_s(msg, "Fatal Error:\r\nCould not evaluate command line arguments: \"%s\"", lpCmdLine);
 
-				sprintf(
-					msg,
-					"Fatal Error:\r\nCould not evaluate command line arguments: \"%s\"",
-					lpCmdLine);
-
-				MessageBoxA(
-					nullptr,
-					msg,
-					"Syringe",
-					MB_OK | MB_ICONERROR);
+				MessageBoxA(nullptr, msg, "Syringe", MB_OK | MB_ICONERROR);
 
 				Log::SelWriteLine("WinMain: ERROR: Command line arguments could not be evaluated, exiting...");
 			}
 		}
 		else
 		{
-			MessageBoxA(
-				nullptr,
-				"Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
-				VERSION_STRING,
-				MB_OK | MB_ICONINFORMATION);
+			MessageBoxA(nullptr, "Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
+				VERSION_STRING, MB_OK | MB_ICONINFORMATION);
 
 			Log::SelWriteLine("WinMain: ERROR: No command line arguments given, exiting...");
 		}

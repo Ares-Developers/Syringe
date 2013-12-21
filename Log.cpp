@@ -1,18 +1,19 @@
 #include "Log.h"
+#include <share.h>
 
 Log* Log::sel = nullptr;
 
 Log::Log(const char* FileName)
 {
 	f = nullptr;
-	strncpy(filename, FileName, LOG_FILENAME_LEN);
+	strncpy_s(filename, FileName, _TRUNCATE);
 }
 
 void Log::Open()
 {
 	Close();
 	if(*filename) {
-		f = fopen(filename, "w");
+		f = _fsopen(filename, "w", _SH_DENYWR);
 	}
 }
 
@@ -29,9 +30,11 @@ void Log::WriteTimestamp()
 	if(f) {
 		time_t raw;
 		time(&raw);
-		tm* t = localtime(&raw);
 
-		fprintf(f, "[%02d:%02d:%02d] ", t->tm_hour, t->tm_min, t->tm_sec);
+		tm t;
+		localtime_s(&t, &raw);
+
+		fprintf(f, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
 		fflush(f);
 		fseek(f, 0, SEEK_END);
 	}

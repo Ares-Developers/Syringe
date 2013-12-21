@@ -142,8 +142,8 @@ private:
 
 		void add(void* eip, const char* filename, const char* proc, int num_overridden) {
 			Hook hook;
-			strncpy(hook.lib, filename, MAX_NAME_LENGTH);
-			strncpy(hook.proc, proc, MAX_NAME_LENGTH);
+			strncpy_s(hook.lib, filename, MAX_NAME_LENGTH - 1);
+			strncpy_s(hook.proc, proc, MAX_NAME_LENGTH - 1);
 			hook.proc_address = nullptr;
 			hook.num_overridden = num_overridden;
 

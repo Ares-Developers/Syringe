@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <share.h>
 
 #include "PortableExecutable.h"
 #include "Log.h"
@@ -58,8 +59,7 @@ bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 	{
 		lpFileName = _strdup(lpOpenFileName);	//copy
 
-		FILE* F = fopen(lpFileName, "rb");
-		if(F)
+		if(FILE* F = _fsopen(lpFileName, "rb", _SH_DENYWR))
 		{
 			//DOS Header
 			fread(&uDOSHeader, sizeof(IMAGE_DOS_HEADER), 1, F);
@@ -213,7 +213,7 @@ void PortableExecutable::OpenHandle() {
 		if(fHandle) {
 			fclose(fHandle);
 		}
-		fHandle = fopen(lpFileName, "rb");
+		fHandle = _fsopen(lpFileName, "rb", _SH_DENYNO);
 	} else {
 		fHandle = nullptr;
 	}

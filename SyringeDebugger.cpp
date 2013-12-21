@@ -385,9 +385,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			char buffer[0x20] = "\0";
 			switch(dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[0])
 			{
-			case 0: strcpy(buffer, "read from"); break;
-			case 1: strcpy(buffer, "write to"); break;
-			case 8: strcpy(buffer, "execute"); break;
+			case 0: strcpy_s(buffer, "read from"); break;
+			case 1: strcpy_s(buffer, "write to"); break;
+			case 8: strcpy_s(buffer, "execute"); break;
 			}
 
 			Log::SelWriteLine("\tThe process tried to %s 0x%08X.",
@@ -623,7 +623,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 {
 	bControlLoaded = false;
 
-	strncpy(exe, filename, EXE_NAME_LENGTH);
+	strncpy_s(exe, filename, EXE_NAME_LENGTH - 1);
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
@@ -706,13 +706,12 @@ void SyringeDebugger::FindDLLs()
 		bool bFindMore = (hFind != INVALID_HANDLE_VALUE);
 
 		while(bFindMore) {
-			char fn[0x100] = "\0";
-			strncpy(fn, find.cFileName, 0x100);
+			std::string fn(find.cFileName);
 
-			//Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn);
+			//Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
 			PortableExecutable DLL;
-			if(DLL.ReadFile(fn)) {
+			if(DLL.ReadFile(fn.c_str())) {
 				DLL.OpenHandle();
 				DWORD dwImageBase = DLL.GetImageBase();
 
@@ -722,11 +721,11 @@ void SyringeDebugger::FindDLLs()
 				if(auto hooks = DLL.FindSection(".syhks00")) {
 					canLoad = ParseHooksSection(DLL, *hooks, buffer);
 				} else {
-					canLoad = ParseInjFileHooks(fn, buffer);
+					canLoad = ParseInjFileHooks(fn.c_str(), buffer);
 				}
 
 				if(canLoad) {
-					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn);
+					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn.c_str());
 
 					if(Handshake(DLL.GetFilename(), buffer.count, buffer.checksum.value(), canLoad)) {
 						// canLoad has been updated already
@@ -749,12 +748,12 @@ void SyringeDebugger::FindDLLs()
 						}
 					}
 				} else if(!buffer.hooks.empty()) {
-					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn);
+					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
 				}
 				DLL.CloseHandle();
 
 			//} else {
-			//	Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn);
+			//	Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
 			}
 
 			bFindMore = (FindNextFile(hFind, &find) != FALSE);
@@ -776,12 +775,10 @@ void SyringeDebugger::FindDLLs()
 }
 
 bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
-	char fn_inj[0x100] = "\0";
-	strcpy(fn_inj, fn);
-	strcat(fn_inj, ".inj");
+	std::string fn_inj = fn + std::string(".inj");
 
-	char line[0x100] = "\0";
-	if(FILE* F = fopen(fn_inj, "r")) {
+	if(FILE* F = _fsopen(fn_inj.c_str(), "r", _SH_DENYWR)) {
+		char line[0x100] = "\0";
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				if(char* func = strchr(line, '=')) {
@@ -792,17 +789,18 @@ bool SyringeDebugger::ParseInjFileHooks(const char* fn, HookBuffer &hooks) {
 					void* eip;
 					int n_over = 0;
 
-					sscanf(line, "%X", &eip);
+					sscanf_s(line, "%X", &eip);
 
 					while(*func == ' ' || *func == '\t') {
 						++func;
 					}
 
-					func = strtok(func, " \t;,\r\n");
+					char* context = nullptr;
+					func = strtok_s(func, " \t;,\r\n", &context);
 
 					if(over) {
 						if(*++over) {
-							sscanf(over, "%X", &n_over);
+							sscanf_s(over, "%X", &n_over);
 						}
 					}
 
@@ -831,7 +829,7 @@ bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECT
 				std::string hostName;
 				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
 					hostName += ".exe";
-					if(!strcmpi(hostName.c_str(), exe)) {
+					if(!_strcmpi(hostName.c_str(), exe)) {
 						return true;
 					}
 				}
