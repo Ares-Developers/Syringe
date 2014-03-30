@@ -39,11 +39,10 @@ bool PortableExecutable::ReadFile(std::string filename)
 				if(uPEHeader.Signature == IMAGE_NT_SIGNATURE)
 				{
 					//Sections
-					for(int i = 0; i < uPEHeader.FileHeader.NumberOfSections; i++)
+					vecPESections.resize(uPEHeader.FileHeader.NumberOfSections);
+					for(auto& section : vecPESections)
 					{
-						IMAGE_SECTION_HEADER current_section;
-						fread(&current_section, sizeof(IMAGE_SECTION_HEADER), 1, F);
-						vecPESections.push_back(current_section);
+						fread(&section, sizeof(IMAGE_SECTION_HEADER), 1, F);
 					}
 
 					//Imports
@@ -57,21 +56,19 @@ bool PortableExecutable::ReadFile(std::string filename)
 							(long)VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress),
 							SEEK_SET);
 
-						for(int i = 0; i < import_desc_count; i++) {
-							fread(&import_desc[i], sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, F);
+						for(auto& desc : import_desc) {
+							fread(&desc, sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, F);
 						}
 
-						PEImport current_import;
-						char name_buf[0x100] = "\0";
-
-						for(int i = 0; i < import_desc_count; i++)
+						for(const auto& desc : import_desc)
 						{
-							current_import.vecThunkData.clear();
-							current_import.uDesc = import_desc[i];
+							PEImport current_import;
+							current_import.uDesc = desc;
 							if(!current_import.uDesc.Name) {
 								break;
 							}
 
+							char name_buf[0x100] = "\0";
 							fseek(F, (long)VirtualToRaw(current_import.uDesc.Name), SEEK_SET);
 							fgets(name_buf, 0x100, F);
 
@@ -89,23 +86,24 @@ bool PortableExecutable::ReadFile(std::string filename)
 								current_import.vecThunkData.push_back(current_thunk);
 							}
 
-							for(size_t k = 0; k < current_import.vecThunkData.size(); k++)
+							auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
+							for(auto& thunk : current_import.vecThunkData)
 							{
-								current_import.vecThunkData[k].Address = current_import.uDesc.FirstThunk + k * sizeof(IMAGE_THUNK_DATA);
+								thunk.Address = reinterpret_cast<DWORD>(thunk_addr++);
 
-								if(current_import.vecThunkData[k].uThunkData.u1.AddressOfData & 0x80000000)
+								if(thunk.uThunkData.u1.AddressOfData & 0x80000000)
 								{
-									current_import.vecThunkData[k].bIsOrdinal = true;
-									current_import.vecThunkData[k].Ordinal = current_import.vecThunkData[k].uThunkData.u1.AddressOfData & 0x7FFFFFFF;
+									thunk.bIsOrdinal = true;
+									thunk.Ordinal = thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF;
 								}
 								else
 								{
-									current_import.vecThunkData[k].bIsOrdinal = false;
+									thunk.bIsOrdinal = false;
 
-									fseek(F, (long)VirtualToRaw(current_import.vecThunkData[k].uThunkData.u1.AddressOfData & 0x7FFFFFFF), SEEK_SET);
-									fread(&current_import.vecThunkData[k].wWord, 2, 1, F);
+									fseek(F, (long)VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF), SEEK_SET);
+									fread(&thunk.wWord, 2, 1, F);
 									fgets(name_buf, 0x100, F);
-									current_import.vecThunkData[k].Name = name_buf;
+									thunk.Name = name_buf;
 								}
 							}
 
