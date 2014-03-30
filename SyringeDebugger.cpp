@@ -207,27 +207,28 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				{
 					if(it->first && it->first != pcEntryPoint && it->second.hooks.size())
 					{
-						int first = -1;
+						SyringeDebugger::Hook* first = nullptr;
 
 						size_t sz = 0;
 						for(size_t i = 0; i < it->second.hooks.size(); i++)
 						{
 							if(it->second.hooks[i].proc_address)
 							{
-								if(first < 0)
-									first = i;
+								if(!first) {
+									first = &it->second.hooks[i];
+								}
 
 								sz += sizeof(code_call);
 							}
 						}
 
-						if(sz && first >= 0)
+						if(sz && first)
 						{
 							sz += sizeof(jmp_back);
 
 							//only use the information of the first working hook, however, every hook
 							//should provide the same information to be secure
-							sz += it->second.hooks[first].num_overridden;
+							sz += first->num_overridden;
 
 							BYTE* p_code_base = (BYTE*)AllocMem(nullptr, sz);
 							BYTE* p_code = p_code_base;
@@ -238,17 +239,17 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 								//Write Caller Code
 								it->second.p_caller_code = p_code_base;
-								for(size_t i = 0; i < it->second.hooks.size(); i++)
+								for(const auto& hook : it->second.hooks)
 								{
-									if(it->second.hooks[i].proc_address)
+									if(hook.proc_address)
 									{
 										//moved to the BP info
-										//it->second.hooks[i].p_caller_code = p_code_base;
+										//hook.p_caller_code = p_code_base;
 
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
 										PatchMem(p_code + 0x03, &(void*)it->first, 4); //PUSH HookAddress
 
-										rel = RelativeOffset((DWORD)p_code + 0x0D, (DWORD)it->second.hooks[i].proc_address);
+										rel = RelativeOffset((DWORD)p_code + 0x0D, (DWORD)hook.proc_address);
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
 										PatchMem(p_code + 0x11, &pdReturnEIP, 4); //MOV
 										PatchMem(p_code + 0x19, &pdReturnEIP, 4); //CMP
@@ -261,13 +262,13 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//Write overridden bytes
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
-								if(it->second.hooks[first].num_overridden > 0)
+								if(first->num_overridden > 0)
 								{
-									std::vector<BYTE> over(it->second.hooks[first].num_overridden);
-									ReadMem(it->first, over.data(), it->second.hooks[first].num_overridden);
-									PatchMem(p_code, over.data(), it->second.hooks[first].num_overridden);
+									std::vector<BYTE> over(first->num_overridden);
+									ReadMem(it->first, over.data(), first->num_overridden);
+									PatchMem(p_code, over.data(), first->num_overridden);
 
-									p_code += it->second.hooks[first].num_overridden;
+									p_code += first->num_overridden;
 								}
 
 								//Write the jump back
@@ -307,7 +308,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//write NOPs
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
-								int n_nop = it->second.hooks[first].num_overridden - 5;
+								int n_nop = first->num_overridden - 5;
 								if(n_nop > 0)
 								{
 									for(int i = 0; i < n_nop; i++)
