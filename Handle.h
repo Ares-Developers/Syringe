@@ -32,6 +32,16 @@ struct ModuleHandleDeleter {
 	}
 };
 
+struct FindHandleDeleter {
+	typedef HANDLE pointer;
+
+	void operator () (pointer handle) {
+		if(handle != INVALID_HANDLE_VALUE) {
+			FindClose(handle);
+		}
+	}
+};
+
 // owns a resource. not copyable, but movable.
 template <typename T, typename Deleter, T Default = T()>
 struct Handle {
@@ -75,5 +85,6 @@ private:
 using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
 using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
 using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
+using FindHandle = Handle<HANDLE, FindHandleDeleter, INVALID_HANDLE_VALUE>;
 
 #endif

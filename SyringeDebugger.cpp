@@ -692,7 +692,7 @@ void SyringeDebugger::FindDLLs()
 
 	if(bControlLoaded) {
 		WIN32_FIND_DATA find;
-		HANDLE hFind = FindFirstFile("*.dll", &find);
+		auto hFind = FindHandle(FindFirstFile("*.dll", &find));
 		bool bFindMore = (hFind != INVALID_HANDLE_VALUE);
 
 		while(bFindMore) {
@@ -748,7 +748,6 @@ void SyringeDebugger::FindDLLs()
 
 			bFindMore = (FindNextFile(hFind, &find) != FALSE);
 		}
-		FindClose(hFind);
 
 		// summarize all hooks
 		v_AllHooks.clear();
