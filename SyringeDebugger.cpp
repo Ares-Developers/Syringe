@@ -203,19 +203,19 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				BYTE jmp_back[] = {0xE9, INIT, INIT, INIT, INIT, };
 				BYTE jmp[] = {0xE9, INIT, INIT, INIT, INIT, };
 
-				for(BPMapType::iterator it = bpMap.begin(); it != bpMap.end(); it++)
+				for(auto& it : bpMap)
 				{
-					if(it->first && it->first != pcEntryPoint && it->second.hooks.size())
+					if(it.first && it.first != pcEntryPoint && it.second.hooks.size())
 					{
-						SyringeDebugger::Hook* first = nullptr;
+						const SyringeDebugger::Hook* first = nullptr;
 
 						size_t sz = 0;
-						for(size_t i = 0; i < it->second.hooks.size(); i++)
+						for(auto& hook : it.second.hooks)
 						{
-							if(it->second.hooks[i].proc_address)
+							if(hook.proc_address)
 							{
 								if(!first) {
-									first = &it->second.hooks[i];
+									first = &hook;
 								}
 
 								sz += sizeof(code_call);
@@ -238,8 +238,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								DWORD rel;
 
 								//Write Caller Code
-								it->second.p_caller_code = p_code_base;
-								for(const auto& hook : it->second.hooks)
+								it.second.p_caller_code = p_code_base;
+								for(const auto& hook : it.second.hooks)
 								{
 									if(hook.proc_address)
 									{
@@ -247,7 +247,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 										//hook.p_caller_code = p_code_base;
 
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
-										PatchMem(p_code + 0x03, &(void*)it->first, 4); //PUSH HookAddress
+										PatchMem(p_code + 0x03, &(void*)it.first, 4); //PUSH HookAddress
 
 										rel = RelativeOffset((DWORD)p_code + 0x0D, (DWORD)hook.proc_address);
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
@@ -265,26 +265,26 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								if(first->num_overridden > 0)
 								{
 									std::vector<BYTE> over(first->num_overridden);
-									ReadMem(it->first, over.data(), first->num_overridden);
+									ReadMem(it.first, over.data(), first->num_overridden);
 									PatchMem(p_code, over.data(), first->num_overridden);
 
 									p_code += first->num_overridden;
 								}
 
 								//Write the jump back
-								rel = RelativeOffset((DWORD)p_code + 0x05, (DWORD)it->first + 0x05);
+								rel = RelativeOffset((DWORD)p_code + 0x05, (DWORD)it.first + 0x05);
 								PatchMem(p_code, jmp_back, sizeof(jmp_back));
 								PatchMem(p_code + 0x01, &rel, 4);
 
 								//Dump
 								/*
-								Log::SelWriteLine("Call dump for 0x%08X at 0x%08X:", it->first, p_code_base);
+								Log::SelWriteLine("Call dump for 0x%08X at 0x%08X:", it.first, p_code_base);
 
 								char dump_str[0x200] = "\0";
 								char buffer[0x10] = "\0";
 								BYTE* dump = new BYTE[sz];
 
-								ReadMem(it->second.p_caller_code, dump, sz);
+								ReadMem(it.second.p_caller_code, dump, sz);
 
 								strcat(dump_str, "\t\t");
 								for(unsigned int i = 0; i < sz; i++)
@@ -299,7 +299,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								delete dump;*/
 
 								//Patch original code
-								BYTE* p_original_code = (BYTE*)it->first;
+								BYTE* p_original_code = (BYTE*)it.first;
 
 								rel = RelativeOffset((DWORD)p_original_code + 5, (DWORD)p_code_base);
 								PatchMem(p_original_code, jmp, sizeof(jmp));
@@ -634,15 +634,13 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 		pImLoadLibrary = nullptr;
 		pImGetProcAddress = nullptr;
 
-		std::vector<PEImport>* v = pe.GetImports();
-		for(size_t i = 0; i < v->size(); i++) {
-			if(_strcmpi(v->at(i).Name.c_str(), "KERNEL32.DLL") == 0) {
-				std::vector<PEThunkData>* u = &v->at(i).vecThunkData;
-				for(size_t k = 0; k < u->size(); k++) {
-					if(_strcmpi(u->at(k).Name.c_str(), "GETPROCADDRESS") == 0) {
-						pImGetProcAddress = (void*)(dwImageBase + u->at(k).Address);
-					} else if(_strcmpi(u->at(k).Name.c_str(), "LOADLIBRARYA") == 0) {
-						pImLoadLibrary = (void*)(dwImageBase + u->at(k).Address);
+		for(const auto& import : *pe.GetImports()) {
+			if(_strcmpi(import.Name.c_str(), "KERNEL32.DLL") == 0) {
+				for(const auto& thunk : import.vecThunkData) {
+					if(_strcmpi(thunk.Name.c_str(), "GETPROCADDRESS") == 0) {
+						pImGetProcAddress = (void*)(dwImageBase + thunk.Address);
+					} else if(_strcmpi(thunk.Name.c_str(), "LOADLIBRARYA") == 0) {
+						pImLoadLibrary = (void*)(dwImageBase + thunk.Address);
 					}
 				}
 			}
@@ -727,16 +725,16 @@ void SyringeDebugger::FindDLLs()
 				}
 
 				if(canLoad) {
-					for(HookBufferType::iterator it = buffer.hooks.begin(); it != buffer.hooks.end(); ++it)
+					for(const auto& it : buffer.hooks)
 					{
-						void* eip = it->first;
+						void* eip = it.first;
 						auto &h = bpMap[eip];
 						h.p_caller_code = nullptr;
 						h.original_opcode = 0x00;
 
-						for(std::vector<Hook>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+						for(const auto& it2 : it.second)
 						{
-							h.hooks.push_back(*it2);
+							h.hooks.push_back(it2);
 						}
 					}
 				} else if(!buffer.hooks.empty()) {
@@ -754,10 +752,9 @@ void SyringeDebugger::FindDLLs()
 
 		// summarize all hooks
 		v_AllHooks.clear();
-		for(auto it = bpMap.begin(); it != bpMap.end(); it++) {
-			auto &h = it->second.hooks;
-			for(size_t i = 0; i < h.size(); i++) {
-				v_AllHooks.push_back(&h[i]);
+		for(auto& it : bpMap) {
+			for(auto& i : it.second.hooks) {
+				v_AllHooks.push_back(&i);
 			}
 		}
 

@@ -39,14 +39,11 @@ bool PortableExecutable::ReadFile(std::string filename)
 				if(uPEHeader.Signature == IMAGE_NT_SIGNATURE)
 				{
 					//Sections
-					IMAGE_SECTION_HEADER current_section;
-					if(uPEHeader.FileHeader.NumberOfSections > 0)
+					for(int i = 0; i < uPEHeader.FileHeader.NumberOfSections; i++)
 					{
-						for(int i = 0; i < uPEHeader.FileHeader.NumberOfSections; i++)
-						{
-							fread(&current_section, sizeof(IMAGE_SECTION_HEADER), 1, F);
-							vecPESections.push_back(current_section);
-						}
+						IMAGE_SECTION_HEADER current_section;
+						fread(&current_section, sizeof(IMAGE_SECTION_HEADER), 1, F);
+						vecPESections.push_back(current_section);
 					}
 
 					//Imports
