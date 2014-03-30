@@ -8,10 +8,8 @@
 
 DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without the image base!
 {
-	IMAGE_SECTION_HEADER uSection;
-	for(size_t i = 0; i < vecPESections.size(); i++)
+	for(const auto& uSection : vecPESections)
 	{
-		uSection = vecPESections[i];
 		if(dwAddress >= uSection.VirtualAddress &&
 			dwAddress < uSection.VirtualAddress + uSection.SizeOfRawData)
 		{
