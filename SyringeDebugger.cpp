@@ -625,16 +625,16 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 		DWORD dwImageBase = pe.GetImageBase();
 
 		//Creation time stamp
-		dwTimeStamp = pe.GetPEHeader()->FileHeader.TimeDateStamp;
+		dwTimeStamp = pe.GetPEHeader().FileHeader.TimeDateStamp;
 
 		//Entry point
-		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader()->OptionalHeader.AddressOfEntryPoint);
+		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader().OptionalHeader.AddressOfEntryPoint);
 
 		//Get Imports
 		pImLoadLibrary = nullptr;
 		pImGetProcAddress = nullptr;
 
-		for(const auto& import : *pe.GetImports()) {
+		for(const auto& import : pe.GetImports()) {
 			if(_strcmpi(import.Name.c_str(), "KERNEL32.DLL") == 0) {
 				for(const auto& thunk : import.vecThunkData) {
 					if(_strcmpi(thunk.Name.c_str(), "GETPROCADDRESS") == 0) {

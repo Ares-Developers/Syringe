@@ -123,7 +123,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 }
 
 DWORD PortableExecutable::GetImageBase() const {
-	return this->GetPEHeader()->OptionalHeader.ImageBase;
+	return this->GetPEHeader().OptionalHeader.ImageBase;
 }
 
 bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {

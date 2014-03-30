@@ -56,12 +56,12 @@ public:
 	const char * GetFilename() const { return Filename.c_str(); }
 
 	//PE
-	const IMAGE_DOS_HEADER* GetDOSHeader() const { return &uDOSHeader; }
-	const IMAGE_NT_HEADERS* GetPEHeader() const { return &uPEHeader; }
+	const IMAGE_DOS_HEADER& GetDOSHeader() const { return uDOSHeader; }
+	const IMAGE_NT_HEADERS& GetPEHeader() const { return uPEHeader; }
 
 	//Sections
-	std::vector<IMAGE_SECTION_HEADER>*	GetSections() { return &vecPESections; }
-	std::vector<PEImport>*				GetImports() { return &vecImports; }
+	const std::vector<IMAGE_SECTION_HEADER>& GetSections() { return vecPESections; }
+	const std::vector<PEImport>& GetImports() { return vecImports; }
 
 	//Helpers
 	DWORD GetImageBase() const;
