@@ -6,21 +6,6 @@
 #include "Handle.h"
 #include "Log.h"
 
-PortableExecutable::PortableExecutable()
-{
-}
-
-PortableExecutable::~PortableExecutable()
-{
-	CloseHandle();
-
-	for(size_t i = 0; i < vecImports.size(); i++)
-	{
-		vecImports[i].vecThunkData.clear();
-	}
-	vecImports.clear();
-}
-
 DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without the image base!
 {
 	IMAGE_SECTION_HEADER uSection;

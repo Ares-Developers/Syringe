@@ -51,9 +51,6 @@ private:
 	FileHandle Handle;
 	
 public:
-	PortableExecutable();
-	~PortableExecutable();
-
 	bool ReadFile(std::string filename);
 
 	const char * GetFilename() const { return Filename.c_str(); }
