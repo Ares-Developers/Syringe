@@ -644,7 +644,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 
 		std::vector<PEImport>* v = pe.GetImports();
 		for(size_t i = 0; i < v->size(); i++) {
-			if(_strcmpi(v->at(i).lpName, "KERNEL32.DLL") == 0) {
+			if(_strcmpi(v->at(i).Name.c_str(), "KERNEL32.DLL") == 0) {
 				std::vector<PEThunkData>* u = &v->at(i).vecThunkData;
 				for(size_t k = 0; k < u->size(); k++) {
 					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0) {

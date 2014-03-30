@@ -28,7 +28,7 @@ struct PEThunkData
 struct PEImport
 {
 	IMAGE_IMPORT_DESCRIPTOR		uDesc;
-	char*						lpName;
+	std::string					Name;
 
 	std::vector<PEThunkData>	vecThunkData;
 };

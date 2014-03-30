@@ -16,10 +16,6 @@ PortableExecutable::~PortableExecutable()
 
 	for(size_t i = 0; i < vecImports.size(); i++)
 	{
-		if(vecImports[i].lpName) {
-			free(vecImports[i].lpName);
-		}
-
 		for(size_t k = 0; k < vecImports[i].vecThunkData.size(); k++)
 		{
 			if(vecImports[i].vecThunkData[k].lpName) {
@@ -106,7 +102,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 							fseek(F, (long)VirtualToRaw(current_import.uDesc.Name), SEEK_SET);
 							fgets(name_buf, 0x100, F);
 
-							current_import.lpName = _strdup(name_buf);
+							current_import.Name = name_buf;
 
 							//Thunks
 							PEThunkData current_thunk;
