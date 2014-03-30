@@ -52,7 +52,7 @@ public:
 	PortableExecutable();
 	~PortableExecutable();
 
-	bool ReadFile(const char*);
+	bool ReadFile(std::string filename);
 
 	const char * GetFilename() const { return Filename.c_str(); }
 

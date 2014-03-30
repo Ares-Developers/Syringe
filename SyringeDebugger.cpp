@@ -710,7 +710,7 @@ void SyringeDebugger::FindDLLs()
 			//Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
 			PortableExecutable DLL;
-			if(DLL.ReadFile(fn.c_str())) {
+			if(DLL.ReadFile(fn)) {
 				DLL.OpenHandle();
 				DWORD dwImageBase = DLL.GetImageBase();
 

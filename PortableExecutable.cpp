@@ -49,11 +49,11 @@ DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without 
 	return 0;
 }
 
-bool PortableExecutable::ReadFile(const char* lpOpenFileName)
+bool PortableExecutable::ReadFile(std::string filename)
 {
-	if(Filename.empty() && lpOpenFileName && *lpOpenFileName)
+	if(Filename.empty() && !filename.empty())
 	{
-		Filename = lpOpenFileName;
+		Filename = std::move(filename);
 
 		if(FILE* F = _fsopen(Filename.c_str(), "rb", _SH_DENYWR))
 		{
