@@ -770,29 +770,12 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 		char line[0x100] = "\0";
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
-				if(char* func = strchr(line, '=')) {
-					*func++ = 0;
+				void* eip = nullptr;
+				char func[MAX_NAME_LENGTH];
+				int n_over = 0;
 
-					char* over = strchr(func, ',');
-
-					void* eip;
-					int n_over = 0;
-
-					sscanf_s(line, "%X", &eip);
-
-					while(*func == ' ' || *func == '\t') {
-						++func;
-					}
-
-					char* context = nullptr;
-					func = strtok_s(func, " \t;,\r\n", &context);
-
-					if(over) {
-						if(*++over) {
-							sscanf_s(over, "%X", &n_over);
-						}
-					}
-
+				// parse the line (length is optional, defaults to 0)
+				if(sscanf_s(line, "%x = %[^ \t;,\r\n] , %x", &eip, func, MAX_NAME_LENGTH, &n_over) > 2) {
 					hooks.add(eip, lib.c_str(), func, n_over);
 				}
 			}
