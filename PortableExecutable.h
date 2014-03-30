@@ -21,7 +21,7 @@ struct PEThunkData
 	int							Ordinal;
 	
 	//!bIsOrdinal
-	char*						lpName;
+	std::string					Name;
 	WORD						wWord;
 };
 

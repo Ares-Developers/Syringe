@@ -647,9 +647,9 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 			if(_strcmpi(v->at(i).Name.c_str(), "KERNEL32.DLL") == 0) {
 				std::vector<PEThunkData>* u = &v->at(i).vecThunkData;
 				for(size_t k = 0; k < u->size(); k++) {
-					if(_strcmpi(u->at(k).lpName, "GETPROCADDRESS") == 0) {
+					if(_strcmpi(u->at(k).Name.c_str(), "GETPROCADDRESS") == 0) {
 						pImGetProcAddress = (void*)(dwImageBase + u->at(k).Address);
-					} else if(_strcmpi(u->at(k).lpName, "LOADLIBRARYA") == 0) {
+					} else if(_strcmpi(u->at(k).Name.c_str(), "LOADLIBRARYA") == 0) {
 						pImLoadLibrary = (void*)(dwImageBase + u->at(k).Address);
 					}
 				}
