@@ -52,8 +52,7 @@ private:
 		HANDLE hThread;
 		LPVOID lastBP;
 	};
-	typedef std::map<DWORD, threadInfo> ThreadMapType;
-	ThreadMapType* threadInfoMap;
+	std::map<DWORD, threadInfo> threadInfoMap;
 
 	//ProcessInfo
 	PROCESS_INFORMATION pInfo;

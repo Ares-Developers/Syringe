@@ -10,9 +10,6 @@ using namespace std;
 
 SyringeDebugger::SyringeDebugger()
 {
-	//bpMap=new BPMapType;
-	threadInfoMap = new ThreadMapType;
-
 	bAttached = false;
 	bEntryBP = true;
 
@@ -33,12 +30,9 @@ SyringeDebugger::SyringeDebugger()
 
 SyringeDebugger::~SyringeDebugger()
 {
-	//delete bpMap;
-	ThreadMapType::iterator i;
-	for(i = threadInfoMap->begin(); i != threadInfoMap->end(); ++i) {
+	for(auto i = threadInfoMap.begin(); i != threadInfoMap.end(); ++i) {
 		CloseHandle(i->second.hThread);
 	}
-	delete threadInfoMap;
 }
 
 bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
@@ -103,7 +97,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 	if(exceptCode == EXCEPTION_BREAKPOINT)
 	{
-		HANDLE currentThread = (*threadInfoMap)[dbgEvent.dwThreadId].hThread;
+		HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -120,7 +114,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		if(context.EFlags & 0x100)
 		{
 			context.EFlags &= ~0x100;
-			PatchMem((*threadInfoMap)[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
+			PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
 		}
 
 		//Load DLLs and retrieve proc addresses
@@ -167,7 +161,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				context.ContextFlags = CONTEXT_CONTROL;
 				SetThreadContext(currentThread, &context);
 
-				(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = exceptAddr;
+				threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
 
 				return DBG_CONTINUE;
 			}
@@ -183,7 +177,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				context.ContextFlags = CONTEXT_CONTROL;
 				SetThreadContext(currentThread, &context);
 
-				(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = exceptAddr;
+				threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
 
 				return DBG_CONTINUE;
 			}
@@ -340,7 +334,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			context.ContextFlags = CONTEXT_CONTROL;
 			SetThreadContext(currentThread, &context);
 
-			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = exceptAddr;
+			threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
 
 			return DBG_CONTINUE;
 		} 
@@ -356,9 +350,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	}
 	else if(exceptCode == EXCEPTION_SINGLE_STEP)
 	{
-		PatchMem((*threadInfoMap)[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
+		PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
 
-		HANDLE hThread = (*threadInfoMap)[dbgEvent.dwThreadId].hThread;
+		HANDLE hThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -379,7 +373,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		{
 			//Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
 
-			HANDLE currentThread = (*threadInfoMap)[dbgEvent.dwThreadId].hThread;
+			HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
 			CONTEXT context;
 
 			char buffer[0x20] = "\0";
@@ -566,18 +560,18 @@ bool SyringeDebugger::Run(char* params)
 			pInfo.dwThreadId = dbgEvent.dwProcessId;
 			pInfo.hThread = dbgEvent.u.CreateProcessInfo.hThread;
 			pInfo.dwThreadId = dbgEvent.dwThreadId;
-			(*threadInfoMap)[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateProcessInfo.hThread;
-			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = nullptr;
+			threadInfoMap[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateProcessInfo.hThread;
+			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
 			CloseHandle(dbgEvent.u.CreateProcessInfo.hFile);
 			break;
 
 		case CREATE_THREAD_DEBUG_EVENT:
-			(*threadInfoMap)[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateThread.hThread;
-			(*threadInfoMap)[dbgEvent.dwThreadId].lastBP = nullptr;
+			threadInfoMap[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateThread.hThread;
+			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
 			break;
 
 		case EXIT_THREAD_DEBUG_EVENT:
-			threadInfoMap->erase(dbgEvent.dwThreadId);
+			threadInfoMap.erase(dbgEvent.dwThreadId);
 			break;
 
 		case EXCEPTION_DEBUG_EVENT:
