@@ -50,6 +50,9 @@
     <ClInclude Include="Handle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FindFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res.rc">

@@ -1,5 +1,6 @@
 #include "SyringeDebugger.h"
 #include "Handle.h"
+#include "FindFile.h"
 #include "Log.h"
 #include "CRC32.h"
 
@@ -691,12 +692,8 @@ void SyringeDebugger::FindDLLs()
 	bpMap.clear();
 
 	if(bControlLoaded) {
-		WIN32_FIND_DATA find;
-		auto hFind = FindHandle(FindFirstFile("*.dll", &find));
-		bool bFindMore = (hFind != INVALID_HANDLE_VALUE);
-
-		while(bFindMore) {
-			std::string fn(find.cFileName);
+		for(auto file = FindFile("*.dll"); file; ++file) {
+			std::string fn(file->cFileName);
 
 			//Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
@@ -745,8 +742,6 @@ void SyringeDebugger::FindDLLs()
 			//} else {
 			//	Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
 			}
-
-			bFindMore = (FindNextFile(hFind, &find) != FALSE);
 		}
 
 		// summarize all hooks
