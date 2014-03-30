@@ -30,9 +30,6 @@ SyringeDebugger::SyringeDebugger()
 
 SyringeDebugger::~SyringeDebugger()
 {
-	for(auto i = threadInfoMap.begin(); i != threadInfoMap.end(); ++i) {
-		CloseHandle(i->second.hThread);
-	}
 }
 
 bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
@@ -97,7 +94,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 	if(exceptCode == EXCEPTION_BREAKPOINT)
 	{
-		HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
+		HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -352,7 +349,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	{
 		PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
 
-		HANDLE hThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
+		HANDLE hThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -373,7 +370,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		{
 			//Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
 
-			HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].hThread;
+			HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
 			CONTEXT context;
 
 			char buffer[0x20] = "\0";
@@ -560,13 +557,13 @@ bool SyringeDebugger::Run(char* params)
 			pInfo.dwThreadId = dbgEvent.dwProcessId;
 			pInfo.hThread = dbgEvent.u.CreateProcessInfo.hThread;
 			pInfo.dwThreadId = dbgEvent.dwThreadId;
-			threadInfoMap[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateProcessInfo.hThread;
+			threadInfoMap[dbgEvent.dwThreadId].Thread = ThreadHandle(dbgEvent.u.CreateProcessInfo.hThread);
 			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
 			CloseHandle(dbgEvent.u.CreateProcessInfo.hFile);
 			break;
 
 		case CREATE_THREAD_DEBUG_EVENT:
-			threadInfoMap[dbgEvent.dwThreadId].hThread = dbgEvent.u.CreateThread.hThread;
+			threadInfoMap[dbgEvent.dwThreadId].Thread = ThreadHandle(dbgEvent.u.CreateThread.hThread);
 			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
 			break;
 

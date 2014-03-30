@@ -2,11 +2,22 @@
 #define FILEHANDLE_H
 
 #include <stdio.h>
+#include <Windows.h>
 
 struct FileHandleDeleter {
 	void operator () (FILE* file) {
 		if(file) {
 			fclose(file);
+		}
+	}
+};
+
+struct ThreadHandleDeleter {
+	typedef HANDLE pointer;
+
+	void operator () (pointer handle) {
+		if(handle) {
+			CloseHandle(handle);
 		}
 	}
 };
@@ -52,5 +63,6 @@ private:
 };
 
 using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
+using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
 
 #endif

@@ -49,7 +49,7 @@ private:
 	//ThreadInfo
 	struct threadInfo
 	{
-		HANDLE hThread;
+		ThreadHandle Thread;
 		LPVOID lastBP;
 	};
 	std::map<DWORD, threadInfo> threadInfoMap;
