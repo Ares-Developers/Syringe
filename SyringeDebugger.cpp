@@ -1,4 +1,5 @@
 #include "SyringeDebugger.h"
+#include "Handle.h"
 #include "Log.h"
 #include "CRC32.h"
 
@@ -776,7 +777,7 @@ void SyringeDebugger::FindDLLs()
 bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hooks) {
 	std::string inj = lib + ".inj";
 
-	if(FILE* F = _fsopen(inj.c_str(), "r", _SH_DENYWR)) {
+	if(auto F = FileHandle(_fsopen(inj.c_str(), "r", _SH_DENYWR))) {
 		char line[0x100] = "\0";
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
@@ -807,7 +808,6 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 				}
 			}
 		}
-		fclose(F);
 
 		return true;
 	}

@@ -3,6 +3,7 @@
 #include <share.h>
 
 #include "PortableExecutable.h"
+#include "Handle.h"
 #include "Log.h"
 
 PortableExecutable::PortableExecutable()
@@ -54,7 +55,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 	{
 		Filename = std::move(filename);
 
-		if(FILE* F = _fsopen(Filename.c_str(), "rb", _SH_DENYWR))
+		if(auto F = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYWR)))
 		{
 			//DOS Header
 			fread(&uDOSHeader, sizeof(IMAGE_DOS_HEADER), 1, F);
@@ -147,7 +148,6 @@ bool PortableExecutable::ReadFile(std::string filename)
 					return true;
 				}
 			}
-			fclose(F);
 		}
 	}
 
