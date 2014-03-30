@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <vector>
+#include <string>
 #include <windows.h>
 
 struct PEThunkData
@@ -33,7 +34,7 @@ struct PEImport
 class PortableExecutable
 {
 private:
-	char*						lpFileName;
+	std::string					Filename;
 
 	//Basic PE structure;
 	IMAGE_DOS_HEADER			uDOSHeader;
@@ -53,7 +54,7 @@ public:
 
 	bool ReadFile(const char*);
 
-	const char * GetFilename() const { return lpFileName; }
+	const char * GetFilename() const { return Filename.c_str(); }
 
 	//PE
 	const IMAGE_DOS_HEADER* GetDOSHeader() const { return &uDOSHeader; }

@@ -7,15 +7,11 @@
 
 PortableExecutable::PortableExecutable()
 {
-	lpFileName = nullptr;
 	fHandle = nullptr;
 }
 
 PortableExecutable::~PortableExecutable()
 {
-	if(lpFileName) {
-		free(lpFileName);
-	}
 	CloseHandle();
 
 	for(size_t i = 0; i < vecImports.size(); i++)
@@ -55,11 +51,11 @@ DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without 
 
 bool PortableExecutable::ReadFile(const char* lpOpenFileName)
 {
-	if(!lpFileName && lpOpenFileName && *lpOpenFileName)
+	if(Filename.empty() && lpOpenFileName && *lpOpenFileName)
 	{
-		lpFileName = _strdup(lpOpenFileName);	//copy
+		Filename = lpOpenFileName;
 
-		if(FILE* F = _fsopen(lpFileName, "rb", _SH_DENYWR))
+		if(FILE* F = _fsopen(Filename.c_str(), "rb", _SH_DENYWR))
 		{
 			//DOS Header
 			fread(&uDOSHeader, sizeof(IMAGE_DOS_HEADER), 1, F);
@@ -164,7 +160,7 @@ DWORD PortableExecutable::GetImageBase() const {
 }
 
 bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {
-	if(lpFileName) {
+	if(!Filename.empty()) {
 		assert(fHandle);
 		auto success = false;
 		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
@@ -176,7 +172,7 @@ bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) 
 }
 
 bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) const {
-	if(lpFileName) {
+	if(!Filename.empty()) {
 		assert(fHandle);
 		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
 			const size_t sz = 0x100;
@@ -207,11 +203,11 @@ const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findNam
 }
 
 void PortableExecutable::OpenHandle() {
-	if(lpFileName) {
+	if(!Filename.empty()) {
 		if(fHandle) {
 			fclose(fHandle);
 		}
-		fHandle = _fsopen(lpFileName, "rb", _SH_DENYNO);
+		fHandle = _fsopen(Filename.c_str(), "rb", _SH_DENYNO);
 	} else {
 		fHandle = nullptr;
 	}
