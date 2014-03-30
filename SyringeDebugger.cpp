@@ -50,7 +50,7 @@ bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 
 bool SyringeDebugger::PatchMem(void* address, void* buffer, DWORD size)
 {
-	return (WriteProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) == TRUE);
+	return (WriteProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) != FALSE);
 }
 
 bool SyringeDebugger::ReadMem(void* address, void* buffer, DWORD size)
