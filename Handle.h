@@ -22,6 +22,16 @@ struct ThreadHandleDeleter {
 	}
 };
 
+struct ModuleHandleDeleter {
+	typedef HMODULE pointer;
+
+	void operator () (pointer handle) {
+		if(handle) {
+			FreeLibrary(handle);
+		}
+	}
+};
+
 // owns a resource. not copyable, but movable.
 template <typename T, typename Deleter, T Default = T()>
 struct Handle {
@@ -64,5 +74,6 @@ private:
 
 using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
 using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
+using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
 
 #endif

@@ -848,7 +848,7 @@ bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMA
 // rely on other methods.
 bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk)
 {
-	if(HMODULE hLib = LoadLibrary(lib))
+	if(auto hLib = ModuleHandle(LoadLibrary(lib)))
 	{
 		if(FARPROC hProc = GetProcAddress(hLib, "SyringeHandshake"))
 		{
@@ -886,8 +886,6 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 		} else {
 			//Log::SelWriteLine("SyringeDebugger::Handshake: Not available.");
 		}
-
-		FreeLibrary(hLib);
 	}
 
 	return false;
