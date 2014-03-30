@@ -3,6 +3,8 @@
 #ifndef PE_H
 #define PE_H
 
+#include "Handle.h"
+
 #include <stdio.h>
 #include <vector>
 #include <string>
@@ -46,7 +48,7 @@ private:
 	//Imports
 	std::vector<PEImport>		vecImports;
 
-	FILE* fHandle;
+	FileHandle Handle;
 	
 public:
 	PortableExecutable();

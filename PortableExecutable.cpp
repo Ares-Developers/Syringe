@@ -7,7 +7,6 @@
 
 PortableExecutable::PortableExecutable()
 {
-	fHandle = nullptr;
 }
 
 PortableExecutable::~PortableExecutable()
@@ -161,10 +160,10 @@ DWORD PortableExecutable::GetImageBase() const {
 
 bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {
 	if(!Filename.empty()) {
-		assert(fHandle);
+		assert(Handle);
 		auto success = false;
-		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
-			success = (fread(Dest, Size, 1, fHandle) == 1);
+		if(!fseek(Handle, long(dwRawAddress), SEEK_SET)) {
+			success = (fread(Dest, Size, 1, Handle) == 1);
 		}
 		return success;
 	}
@@ -173,13 +172,13 @@ bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) 
 
 bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) const {
 	if(!Filename.empty()) {
-		assert(fHandle);
-		if(!fseek(fHandle, long(dwRawAddress), SEEK_SET)) {
+		assert(Handle);
+		if(!fseek(Handle, long(dwRawAddress), SEEK_SET)) {
 			const size_t sz = 0x100;
 			char tmpBuf[sz];
 
 			tmpBuf[0] = 0;
-			if(fread(tmpBuf, 1, sz, fHandle) == sz) {
+			if(fread(tmpBuf, 1, sz, Handle) == sz) {
 				tmpBuf[sz - 1] = 0;
 				Result.assign(tmpBuf);
 				return true;
@@ -203,19 +202,13 @@ const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findNam
 }
 
 void PortableExecutable::OpenHandle() {
+	CloseHandle();
+
 	if(!Filename.empty()) {
-		if(fHandle) {
-			fclose(fHandle);
-		}
-		fHandle = _fsopen(Filename.c_str(), "rb", _SH_DENYNO);
-	} else {
-		fHandle = nullptr;
+		Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
 	}
 }
 
 void PortableExecutable::CloseHandle() {
-	if(fHandle) {
-		fclose(fHandle);
-		fHandle = nullptr;
-	}
+	Handle.clear();
 }

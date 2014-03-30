@@ -143,6 +143,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CRC32.h" />
+    <ClInclude Include="Handle.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="PortableExecutable.h" />
     <ClInclude Include="resource.h" />
