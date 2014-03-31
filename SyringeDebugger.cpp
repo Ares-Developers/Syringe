@@ -432,13 +432,15 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 bool SyringeDebugger::Run(char* params)
 {
-	if(!bControlLoaded || *exe == 0)
+	if(!bControlLoaded || exe.empty()) {
 		return false;
+	}
 
-	Log::SelWriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe, params);
+	Log::SelWriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), params);
 
-	if(!DebugProcess(exe, params))
+	if(!DebugProcess(exe.c_str(), params)) {
 		return false;
+	}
 
 	Log::SelWriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
 	pAlloc = (BYTE*)AllocMem(nullptr, 0x1000);
@@ -592,7 +594,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 {
 	bControlLoaded = false;
 
-	strncpy_s(exe, filename, EXE_NAME_LENGTH - 1);
+	exe = filename;
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
@@ -648,7 +650,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 	is.close();
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
-	Log::SelWriteLine("\texe = %s", exe);
+	Log::SelWriteLine("\texe = %s", exe.c_str());
 	Log::SelWriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
 	Log::SelWriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
 	Log::SelWriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
@@ -657,7 +659,7 @@ bool SyringeDebugger::RetrieveInfo(const char* filename)
 	Log::SelWriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
 	Log::SelWriteLine();
 
-	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe);
+	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
 
 	bControlLoaded = true;
 	return true;
@@ -766,7 +768,7 @@ bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECT
 				std::string hostName;
 				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
 					hostName += ".exe";
-					if(!_strcmpi(hostName.c_str(), exe)) {
+					if(!_strcmpi(hostName.c_str(), exe.c_str())) {
 						return true;
 					}
 				}

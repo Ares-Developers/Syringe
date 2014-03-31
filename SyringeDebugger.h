@@ -33,9 +33,7 @@ public:
 		bControlLoaded(false),
 		bDLLsLoaded(false),
 		pLastBP(nullptr)
-	{
-		*exe = 0;
-	};
+	{}
 
 	//Debugger
 	bool DebugProcess(const char* exeFile, char* params);
@@ -98,7 +96,7 @@ private:
 	std::vector<Hook*>::iterator loop_LoadLibrary;
 
 	//Syringe
-	char exe[EXE_NAME_LENGTH];
+	std::string exe;
 	void* pcEntryPoint;
 	void* pImLoadLibrary;
 	void* pImGetProcAddress;
