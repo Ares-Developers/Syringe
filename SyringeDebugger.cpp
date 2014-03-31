@@ -9,30 +9,6 @@
 
 using namespace std;
 
-SyringeDebugger::SyringeDebugger()
-{
-	bAttached = false;
-	bEntryBP = true;
-
-	pcEntryPoint = nullptr;
-	pcLoadLibrary = nullptr;
-	pcLoadLibraryEnd = nullptr;
-
-	pImLoadLibrary = nullptr;
-	pImGetProcAddress = nullptr;
-	pAlloc = nullptr;
-	*exe = 0;
-
-	bControlLoaded = false;
-	bDLLsLoaded = false;
-	v_AllHooks.clear();
-	pLastBP = nullptr;
-}
-
-SyringeDebugger::~SyringeDebugger()
-{
-}
-
 bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 {
 	STARTUPINFO startupInfo;

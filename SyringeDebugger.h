@@ -21,8 +21,21 @@ const unsigned char NOP = 0x90;
 class SyringeDebugger
 {
 public:
-	SyringeDebugger();
-	~SyringeDebugger();
+	SyringeDebugger() :
+		bAttached(false),
+		bEntryBP(true),
+		pcEntryPoint(nullptr),
+		pcLoadLibrary(nullptr),
+		pcLoadLibraryEnd(nullptr),
+		pImLoadLibrary(nullptr),
+		pImGetProcAddress(nullptr),
+		pAlloc(nullptr),
+		bControlLoaded(false),
+		bDLLsLoaded(false),
+		pLastBP(nullptr)
+	{
+		*exe = 0;
+	};
 
 	//Debugger
 	bool DebugProcess(const char* exeFile, char* params);
