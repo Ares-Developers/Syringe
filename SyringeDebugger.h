@@ -50,7 +50,7 @@ public:
 	bool ReadMem(void* address, void* buffer, DWORD size);
 
 	//Syringe
-	bool RetrieveInfo(const char*);
+	bool RetrieveInfo(std::string filename);
 	void FindDLLs();
 
 private:

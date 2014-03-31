@@ -590,11 +590,11 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	}
 }
 
-bool SyringeDebugger::RetrieveInfo(const char* filename)
+bool SyringeDebugger::RetrieveInfo(std::string filename)
 {
 	bControlLoaded = false;
 
-	exe = filename;
+	exe = std::move(filename);
 
 	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
