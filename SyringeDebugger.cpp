@@ -129,11 +129,11 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				ReadMem(pdProcAddress, &(*loop_LoadLibrary)->proc_address, 4);
 
 				if((*loop_LoadLibrary)->proc_address) {
-					Log::SelWriteLine(
-						"SyringeDebugger::HandleException: Loaded ProcAddress: %s - %s - 0x%08X",
-						(*loop_LoadLibrary)->lib,
-						(*loop_LoadLibrary)->proc,
-						(*loop_LoadLibrary)->proc_address);
+					//Log::SelWriteLine(
+					//	"SyringeDebugger::HandleException: Loaded ProcAddress: %s - %s - 0x%08X",
+					//	(*loop_LoadLibrary)->lib,
+					//	(*loop_LoadLibrary)->proc,
+					//	(*loop_LoadLibrary)->proc_address);
 				} else {
 					doPatch = false;
 					Log::SelWriteLine(
