@@ -89,8 +89,7 @@ private:
 		std::vector<Hook> hooks;
 		BYTE* p_caller_code; //used to delete later?
 	};
-	typedef stdext::hash_map<void*, BPInfo> BPMapType;
-	BPMapType bpMap;
+	std::map<void*, BPInfo> bpMap;
 
 	std::vector<Hook*> v_AllHooks;
 	std::vector<Hook*>::iterator loop_LoadLibrary;

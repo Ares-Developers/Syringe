@@ -580,11 +580,12 @@ bool SyringeDebugger::Run(char* params)
 
 void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 {
-	BPMapType::iterator i = bpMap.find(address);
+	auto i = bpMap.find(address);
 	if(i != bpMap.end())
 	{
-		if(restoreOpcode)
+		if(restoreOpcode) {
 			PatchMem(address, (void*)&i->second.original_opcode, 1);
+		}
 
 		bpMap.erase(i);
 	}
