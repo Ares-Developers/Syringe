@@ -1,6 +1,8 @@
 #include "SyringeDebugger.h"
 #include "Log.h"
 
+#include <string>
+
 #define VERSION_STRING	"Syringe 0.7.0.3"
 
 SyringeDebugger Debugger;
@@ -26,11 +28,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if(args)
 			{
-				char file[0x200] = "\0";
-				strncpy_s(file, fn, args - fn);
+				std::string file(fn, args - fn);
 				++args;
 
-				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file);
+				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
 				Log::SelWriteLine();
 				if(Debugger.RetrieveInfo(file))
 				{
@@ -50,11 +51,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else
 				{
 					char msg[0x280] = "\0";
-					sprintf_s(msg, "Fatal Error:\r\nCould not load executable file: \"%s\"", file);
+					sprintf_s(msg, "Fatal Error:\r\nCould not load executable file: \"%s\"", file.c_str());
 
 					MessageBoxA(nullptr, msg, "Syringe", MB_OK | MB_ICONERROR);
 
-					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...", file);
+					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...");
 				}
 			}
 			else
