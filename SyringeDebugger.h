@@ -29,7 +29,6 @@ public:
 		pcLoadLibraryEnd(nullptr),
 		pImLoadLibrary(nullptr),
 		pImGetProcAddress(nullptr),
-		pAlloc(nullptr),
 		bControlLoaded(false),
 		bDLLsLoaded(false),
 		pLastBP(nullptr)
@@ -45,7 +44,7 @@ public:
 	void RemoveBP(void* address, bool restoreOpcode);
 
 	//Memory
-	LPVOID AllocMem(void* address, size_t size);
+	VirtualMemoryHandle AllocMem(void* address, size_t size);
 	bool PatchMem(void* address, void* buffer, DWORD size);
 	bool ReadMem(void* address, void* buffer, DWORD size);
 
@@ -87,7 +86,7 @@ private:
 	{
 		BYTE original_opcode;
 		std::vector<Hook> hooks;
-		BYTE* p_caller_code; //used to delete later?
+		VirtualMemoryHandle p_caller_code;
 	};
 	std::map<void*, BPInfo> bpMap;
 
@@ -99,7 +98,7 @@ private:
 	void* pcEntryPoint;
 	void* pImLoadLibrary;
 	void* pImGetProcAddress;
-	BYTE* pAlloc;
+	VirtualMemoryHandle pAlloc;
 	DWORD dwTimeStamp;
 	DWORD dwExeSize;
 	DWORD dwExeCRC;

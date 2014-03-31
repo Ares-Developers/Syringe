@@ -37,9 +37,9 @@ bool SyringeDebugger::ReadMem(void* address, void* buffer, DWORD size)
 	return (read == size);
 }
 
-LPVOID SyringeDebugger::AllocMem(void* address, size_t size)
+VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 {
-	return VirtualAllocEx(pInfo.hProcess, address, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	return VirtualMemoryHandle(pInfo.hProcess, address, size);
 }
 
 bool SyringeDebugger::SetBP(void* address)
@@ -207,22 +207,18 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 							//should provide the same information to be secure
 							sz += first->num_overridden;
 
-							BYTE* p_code_base = (BYTE*)AllocMem(nullptr, sz);
-							BYTE* p_code = p_code_base;
-
-							if(p_code_base)
+							if(auto p_code_base = AllocMem(nullptr, sz))
 							{
 								DWORD rel;
+								BYTE* const base = p_code_base;
+								BYTE* p_code = base;
 
 								//Write Caller Code
-								it.second.p_caller_code = p_code_base;
+								it.second.p_caller_code = std::move(p_code_base);
 								for(const auto& hook : it.second.hooks)
 								{
 									if(hook.proc_address)
 									{
-										//moved to the BP info
-										//hook.p_caller_code = p_code_base;
-
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
 										PatchMem(p_code + 0x03, &(void*)it.first, 4); //PUSH HookAddress
 
@@ -255,7 +251,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 								//Dump
 								/*
-								Log::SelWriteLine("Call dump for 0x%08X at 0x%08X:", it.first, p_code_base);
+								Log::SelWriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
 								char dump_str[0x200] = "\0";
 								char buffer[0x10] = "\0";
@@ -278,7 +274,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//Patch original code
 								BYTE* p_original_code = (BYTE*)it.first;
 
-								rel = RelativeOffset((DWORD)p_original_code + 5, (DWORD)p_code_base);
+								rel = RelativeOffset((DWORD)p_original_code + 5, (DWORD)base);
 								PatchMem(p_original_code, jmp, sizeof(jmp));
 								PatchMem(p_original_code + 0x01, &rel, 4);
 
@@ -443,11 +439,13 @@ bool SyringeDebugger::Run(char* params)
 	}
 
 	Log::SelWriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
-	pAlloc = (BYTE*)AllocMem(nullptr, 0x1000);
+	pAlloc = AllocMem(nullptr, 0x1000);
 
-	Log::SelWriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", pAlloc);
+	Log::SelWriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", static_cast<void*>(pAlloc));
 
-	if(!pAlloc)return false;
+	if(!pAlloc) {
+		return false;
+	}
 
 	Log::SelWriteLine("SyringeDebugger::Run: Filling allocated space with zero...");
 	char zero[0x1000] = "\0";
@@ -705,7 +703,7 @@ void SyringeDebugger::FindDLLs()
 					{
 						void* eip = it.first;
 						auto &h = bpMap[eip];
-						h.p_caller_code = nullptr;
+						h.p_caller_code.clear();
 						h.original_opcode = 0x00;
 						h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
 					}

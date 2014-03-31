@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <Windows.h>
+#include <utility>
 
 struct FileHandleDeleter {
 	void operator () (FILE* file) {
@@ -86,5 +87,52 @@ using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
 using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
 using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
 using FindHandle = Handle<HANDLE, FindHandleDeleter, INVALID_HANDLE_VALUE>;
+
+struct VirtualMemoryHandle {
+	VirtualMemoryHandle() : Value(nullptr), Process(nullptr) {}
+	VirtualMemoryHandle(HANDLE process, void* address, size_t size) : VirtualMemoryHandle() {
+		if(process && size) {
+			this->Value = VirtualAllocEx(process, address, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		}
+	}
+
+	VirtualMemoryHandle(const VirtualMemoryHandle&) = delete;
+
+	VirtualMemoryHandle(VirtualMemoryHandle&& other) {
+		*this = std::move(other);
+	};
+
+	~VirtualMemoryHandle() {
+		this->clear();
+	}
+
+	VirtualMemoryHandle& operator = (const VirtualMemoryHandle&) = delete;
+
+	VirtualMemoryHandle& operator = (VirtualMemoryHandle&& other) {
+		this->clear();
+		std::swap(this->Value, other.Value);
+		std::swap(this->Process, other.Process);
+		return *this;
+	}
+
+	operator BYTE*() const {
+		return static_cast<BYTE*>(this->Value);
+	}
+
+	void clear() {
+		auto val = this->Value;
+		auto proc = this->Process;
+		this->Value = nullptr;
+		this->Process = nullptr;
+
+		if(val && proc) {
+			VirtualFreeEx(proc, val, 0, MEM_RELEASE);
+		}
+	}
+
+private:
+	void* Value;
+	HANDLE Process;
+};
 
 #endif
