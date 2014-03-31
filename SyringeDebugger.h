@@ -111,10 +111,6 @@ private:
 
 	bool bAVLogged;
 
-	DWORD time_start;
-	DWORD time;
-	int repeat;
-
 	//data addresses
 	BYTE* pdData;
 
@@ -131,9 +127,8 @@ private:
 	BYTE* pcLoadLibrary;
 	BYTE* pcLoadLibraryEnd;
 
-	typedef std::map<void*, std::vector<Hook>> HookBufferType;
 	struct HookBuffer {
-		HookBufferType hooks;
+		std::map<void*, std::vector<Hook>> hooks;
 		CRC32 checksum;
 		size_t count;
 
