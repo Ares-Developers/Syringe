@@ -43,7 +43,7 @@ bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 	bool retVal = (CreateProcess(
 		exeFile, params, nullptr, nullptr, false,
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
-		nullptr, nullptr, &startupInfo, &pInfo) != 0);
+		nullptr, nullptr, &startupInfo, &pInfo) != FALSE);
 
 	bAttached = retVal;
 	return retVal;
@@ -375,16 +375,16 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
 			CONTEXT context;
 
-			char buffer[0x20] = "\0";
+			char* access = nullptr;
 			switch(dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[0])
 			{
-			case 0: strcpy_s(buffer, "read from"); break;
-			case 1: strcpy_s(buffer, "write to"); break;
-			case 8: strcpy_s(buffer, "execute"); break;
+			case 0: access = "read from"; break;
+			case 1: access = "write to"; break;
+			case 8: access = "execute"; break;
 			}
 
 			Log::SelWriteLine("\tThe process tried to %s 0x%08X.",
-				buffer,
+				access,
 				dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[1]);
 
 			context.ContextFlags = CONTEXT_FULL;
@@ -606,7 +606,7 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	if(i != bpMap.end())
 	{
 		if(restoreOpcode)
-			PatchMem(address, (void*)&bpMap[address].original_opcode, 1);
+			PatchMem(address, (void*)&i->second.original_opcode, 1);
 
 		bpMap.erase(i);
 	}
@@ -728,11 +728,7 @@ void SyringeDebugger::FindDLLs()
 						auto &h = bpMap[eip];
 						h.p_caller_code = nullptr;
 						h.original_opcode = 0x00;
-
-						for(const auto& it2 : it.second)
-						{
-							h.hooks.push_back(it2);
-						}
+						h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
 					}
 				} else if(!buffer.hooks.empty()) {
 					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
