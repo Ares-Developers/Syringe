@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "Handle.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -11,7 +13,7 @@
 class Log
 {
 private:
-	FILE* f;
+	FileHandle File;
 	char filename[LOG_FILENAME_LEN];
 
 	static Log* sel;

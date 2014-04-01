@@ -5,7 +5,6 @@ Log* Log::sel = nullptr;
 
 Log::Log(const char* FileName)
 {
-	f = nullptr;
 	strncpy_s(filename, FileName, _TRUNCATE);
 }
 
@@ -13,53 +12,50 @@ void Log::Open()
 {
 	Close();
 	if(*filename) {
-		f = _fsopen(filename, "w", _SH_DENYWR);
+		this->File = FileHandle(_fsopen(filename, "w", _SH_DENYWR));
 	}
 }
 
 void Log::Close()
 {
-	if(f) {
-		fclose(f);
-		f = nullptr;
-	}
+	this->File.clear();
 }
 
 void Log::WriteTimestamp()
 {
-	if(f) {
+	if(this->File) {
 		time_t raw;
 		time(&raw);
 
 		tm t;
 		localtime_s(&t, &raw);
 
-		fprintf(f, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
-		fflush(f);
-		fseek(f, 0, SEEK_END);
+		fprintf(this->File, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
+		fflush(this->File);
+		fseek(this->File, 0, SEEK_END);
 	}
 }
 
 void Log::WriteLine()
 {
-	if(f)
+	if(this->File)
 	{
-		fputs("\n", f);
-		fflush(f);
-		fseek(f, 0, SEEK_END);
+		fputs("\n", this->File);
+		fflush(this->File);
+		fseek(this->File, 0, SEEK_END);
 	}
 }
 
 void Log::WriteLine(const char* Format, ...)
 {
-	if(f) {
+	if(this->File) {
 		WriteTimestamp();
 
 		va_list args;
 		va_start(args, Format);
 
-		if(f) {
-			vfprintf(f, Format, args);
+		if(this->File) {
+			vfprintf(this->File, Format, args);
 		}
 
 		va_end(args);
@@ -70,9 +66,9 @@ void Log::WriteLine(const char* Format, ...)
 
 void Log::WriteLine(const char* Format, va_list Arguments)
 {
-	if(f) {
+	if(this->File) {
 		WriteTimestamp();
-		vfprintf(f, Format, Arguments);
+		vfprintf(this->File, Format, Arguments);
 		WriteLine();
 	}
 }
