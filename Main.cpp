@@ -9,8 +9,8 @@ SyringeDebugger Debugger;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	Log* log = new Log("syringe.log");
-	Log::Select(log);
+	Log log("syringe.log");
+	Log::Select(&log);
 
 	Log::SelOpen();
 
