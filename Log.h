@@ -18,17 +18,17 @@ private:
 
 	static Log* sel;
 
-	virtual void WriteTimestamp();
+	void WriteTimestamp();
 
 public:
 	Log(std::string filename) : Filename(std::move(filename)) {}
 
-	virtual void Open();
-	virtual void Close();
+	void Open();
+	void Close();
 
-	virtual void WriteLine();
-	virtual void WriteLine(const char*, ...);
-	virtual void WriteLine(const char*, va_list);
+	void WriteLine();
+	void WriteLine(const char*, ...);
+	void WriteLine(const char*, va_list);
 
 	static void Select(Log*);
 	static void Deselect();
