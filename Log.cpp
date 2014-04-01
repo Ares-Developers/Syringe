@@ -3,16 +3,11 @@
 
 Log* Log::sel = nullptr;
 
-Log::Log(const char* FileName)
-{
-	strncpy_s(filename, FileName, _TRUNCATE);
-}
-
 void Log::Open()
 {
 	Close();
-	if(*filename) {
-		this->File = FileHandle(_fsopen(filename, "w", _SH_DENYWR));
+	if(!this->Filename.empty()) {
+		this->File = FileHandle(_fsopen(this->Filename.c_str(), "w", _SH_DENYWR));
 	}
 }
 

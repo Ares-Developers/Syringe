@@ -8,20 +8,20 @@
 #include <string.h>
 #include <time.h>
 
-#define LOG_FILENAME_LEN 0x200
+#include <string>
 
 class Log
 {
 private:
 	FileHandle File;
-	char filename[LOG_FILENAME_LEN];
+	std::string Filename;
 
 	static Log* sel;
 
 	virtual void WriteTimestamp();
 
 public:
-	Log(const char*);
+	Log(std::string filename) : Filename(std::move(filename)) {}
 
 	virtual void Open();
 	virtual void Close();
