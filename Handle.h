@@ -75,8 +75,10 @@ struct Handle {
 		auto tmp = this->Value;
 		this->Value = Default;
 
-		Deleter del;
-		del(tmp);
+		if(tmp != Default) {
+			Deleter del;
+			del(tmp);
+		}
 	}
 
 private:
