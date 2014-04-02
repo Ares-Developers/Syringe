@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define VERSION_STRING	"Syringe 0.7.0.3"
+#define VERSION_STRING	"Syringe 0.7.0.4"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
