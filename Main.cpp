@@ -5,8 +5,6 @@
 
 #define VERSION_STRING	"Syringe 0.7.0.3"
 
-SyringeDebugger Debugger;
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	Log log("syringe.log");
@@ -33,6 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
 				Log::SelWriteLine();
+				SyringeDebugger Debugger;
 				if(Debugger.RetrieveInfo(file))
 				{
 					Log::SelWriteLine("WinMain: SyringeDebugger::FindDLLs();");
