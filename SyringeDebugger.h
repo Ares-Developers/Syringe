@@ -12,7 +12,7 @@
 #define	MAX_NAME_LENGTH	0x100
 #define EXE_NAME_LENGTH	0x100
 
-#define INIT 0x00
+static const BYTE INIT = 0x00;
 
 static const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
 									//was some static const w/e shit, caused errors =S   -pd
