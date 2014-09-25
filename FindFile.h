@@ -7,7 +7,7 @@
 
 class FindFile {
 public:
-	FindFile(const char* fileName = nullptr) : Valid(false) {
+	explicit FindFile(const char* fileName = nullptr) : Valid(false) {
 		if(fileName) {
 			this->Handle = FindHandle(FindFirstFile(fileName, &this->Data));
 			this->Valid = (this->Handle != INVALID_HANDLE_VALUE);
@@ -29,7 +29,7 @@ public:
 		return *this;
 	}
 
-	operator bool() const {
+	explicit operator bool() const {
 		return this->Valid;
 	}
 
