@@ -6,7 +6,7 @@
 #include <utility>
 
 struct FileHandleDeleter {
-	void operator () (FILE* file) {
+	void operator () (FILE* file) const {
 		if(file) {
 			fclose(file);
 		}
@@ -16,7 +16,7 @@ struct FileHandleDeleter {
 struct ThreadHandleDeleter {
 	typedef HANDLE pointer;
 
-	void operator () (pointer handle) {
+	void operator () (pointer handle) const {
 		if(handle) {
 			CloseHandle(handle);
 		}
@@ -26,7 +26,7 @@ struct ThreadHandleDeleter {
 struct ModuleHandleDeleter {
 	typedef HMODULE pointer;
 
-	void operator () (pointer handle) {
+	void operator () (pointer handle) const {
 		if(handle) {
 			FreeLibrary(handle);
 		}
@@ -36,7 +36,7 @@ struct ModuleHandleDeleter {
 struct FindHandleDeleter {
 	typedef HANDLE pointer;
 
-	void operator () (pointer handle) {
+	void operator () (pointer handle) const {
 		if(handle != INVALID_HANDLE_VALUE) {
 			FindClose(handle);
 		}
