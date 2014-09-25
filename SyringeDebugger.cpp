@@ -16,6 +16,8 @@ bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 	memset(&startupInfo, 0, sizeof(startupInfo));
 	startupInfo.cb = sizeof(startupInfo);
 
+	SetEnvironmentVariable("_NO_DEBUG_HEAP", "1");
+
 	bool retVal = (CreateProcess(
 		exeFile, params, nullptr, nullptr, false,
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
