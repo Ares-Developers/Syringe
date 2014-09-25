@@ -288,10 +288,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
 								BYTE buffer = NOP;
-								int n_nop = first->num_overridden - 5;
-
-								for(int i = 0; i < n_nop; ++i) {
-									PatchMem(&p_original_code[i + 5], &buffer, 1);
+								for(size_t i = 5; i < first->num_overridden; ++i) {
+									PatchMem(&p_original_code[i], &buffer, 1);
 								}
 							}
 						}
@@ -746,7 +744,7 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
 				char func[MAX_NAME_LENGTH];
-				int n_over = 0;
+				size_t n_over = 0;
 
 				// parse the line (length is optional, defaults to 0)
 				if(sscanf_s(line, "%x = %[^ \t;,\r\n] , %x", &eip, func, MAX_NAME_LENGTH, &n_over) > 2) {

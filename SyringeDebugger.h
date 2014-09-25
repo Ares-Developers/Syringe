@@ -79,7 +79,7 @@ private:
 		char proc[MAX_NAME_LENGTH];
 		void* proc_address;
 
-		int num_overridden;
+		size_t num_overridden;
 		//BYTE*		p_caller_code;
 	};
 	struct BPInfo
@@ -143,7 +143,7 @@ private:
 			count++;
 		}
 
-		void add(void* eip, const char* filename, const char* proc, int num_overridden) {
+		void add(void* eip, const char* filename, const char* proc, size_t num_overridden) {
 			Hook hook;
 			strncpy_s(hook.lib, filename, MAX_NAME_LENGTH - 1);
 			strncpy_s(hook.proc, proc, MAX_NAME_LENGTH - 1);
