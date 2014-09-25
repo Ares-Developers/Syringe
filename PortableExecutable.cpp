@@ -53,7 +53,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 
 						fseek(
 							F,
-							(long)VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress),
+							static_cast<long>(VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)),
 							SEEK_SET);
 
 						for(auto& desc : import_desc) {
@@ -69,7 +69,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 							}
 
 							char name_buf[0x100] = "\0";
-							fseek(F, (long)VirtualToRaw(current_import.uDesc.Name), SEEK_SET);
+							fseek(F, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
 							fgets(name_buf, 0x100, F);
 
 							current_import.Name = name_buf;
@@ -77,7 +77,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 							//Thunks
 							PEThunkData current_thunk;
 
-							fseek(F, (long)VirtualToRaw(current_import.uDesc.FirstThunk), SEEK_SET);
+							fseek(F, static_cast<long>(VirtualToRaw(current_import.uDesc.FirstThunk)), SEEK_SET);
 
 							for(fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, F);
 								current_thunk.uThunkData.u1.AddressOfData;
@@ -100,7 +100,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 								{
 									thunk.bIsOrdinal = false;
 
-									fseek(F, (long)VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF), SEEK_SET);
+									fseek(F, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF)), SEEK_SET);
 									fread(&thunk.wWord, 2, 1, F);
 									fgets(name_buf, 0x100, F);
 									thunk.Name = name_buf;
@@ -128,7 +128,7 @@ bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) 
 	if(!Filename.empty()) {
 		assert(Handle);
 		auto success = false;
-		if(!fseek(Handle, long(dwRawAddress), SEEK_SET)) {
+		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
 			success = (fread(Dest, Size, 1, Handle) == 1);
 		}
 		return success;
@@ -139,7 +139,7 @@ bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) 
 bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) const {
 	if(!Filename.empty()) {
 		assert(Handle);
-		if(!fseek(Handle, long(dwRawAddress), SEEK_SET)) {
+		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
 			const size_t sz = 0x100;
 			char tmpBuf[sz];
 

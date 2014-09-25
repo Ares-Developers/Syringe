@@ -99,7 +99,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		if(!bDLLsLoaded) //&& (exceptAddr==pcEntryPoint || exceptAddr==pcLoadLibraryEnd))
 		{
 			//Restore
-			PatchMem(exceptAddr, (void*)&bpMap[exceptAddr].original_opcode, 1);
+			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
 
 			bool doPatch = true;
 			if(loop_LoadLibrary == v_AllHooks.end())
@@ -132,7 +132,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 					PatchMem(pdProcName, &(*loop_LoadLibrary)->proc, MAX_NAME_LENGTH);
 				//}
 
-				context.Eip = (DWORD)pcLoadLibrary;
+				context.Eip = reinterpret_cast<DWORD>(pcLoadLibrary);
 
 				//single step mode
 				context.EFlags |= 0x100;
@@ -148,7 +148,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				Log::SelWriteLine("SyringeDebugger::HandleException: Finished retrieving proc addresses.");
 				bDLLsLoaded = true;
 
-				context.Eip = (DWORD)pcEntryPoint;
+				context.Eip = reinterpret_cast<DWORD>(pcEntryPoint);
 
 				//single step mode
 				context.EFlags |= 0x100;
@@ -224,9 +224,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 									if(hook.proc_address)
 									{
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
-										PatchMem(p_code + 0x03, &(void*)it.first, 4); //PUSH HookAddress
+										PatchMem(p_code + 0x03, const_cast<void**>(&it.first), 4); //PUSH HookAddress
 
-										rel = RelativeOffset((DWORD)p_code + 0x0D, (DWORD)hook.proc_address);
+										rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x0D, reinterpret_cast<DWORD>(hook.proc_address));
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
 										PatchMem(p_code + 0x11, &pdReturnEIP, 4); //MOV
 										PatchMem(p_code + 0x19, &pdReturnEIP, 4); //CMP
@@ -249,7 +249,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								}
 
 								//Write the jump back
-								rel = RelativeOffset((DWORD)p_code + 0x05, (DWORD)it.first + 0x05);
+								rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x05, reinterpret_cast<DWORD>(it.first) + 0x05);
 								PatchMem(p_code, jmp_back, sizeof(jmp_back));
 								PatchMem(p_code + 0x01, &rel, 4);
 
@@ -276,9 +276,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								delete dump;*/
 
 								//Patch original code
-								BYTE* p_original_code = (BYTE*)it.first;
+								BYTE* p_original_code = static_cast<BYTE*>(it.first);
 
-								rel = RelativeOffset((DWORD)p_original_code + 5, (DWORD)base);
+								rel = RelativeOffset(reinterpret_cast<DWORD>(p_original_code) + 5, reinterpret_cast<DWORD>(base));
 								PatchMem(p_original_code, jmp, sizeof(jmp));
 								PatchMem(p_original_code + 0x01, &rel, 4);
 
@@ -300,7 +300,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			}
 
 			//Restore
-			PatchMem(exceptAddr, (void*)&bpMap[exceptAddr].original_opcode, 1);
+			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
 
 			//single step mode
 			context.EFlags |= 0x100;
@@ -378,7 +378,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			Log::SelWriteLine();
 
 			Log::SelWriteLine("\tStack dump:");
-			DWORD* esp = (DWORD*)context.Esp;
+			auto esp = reinterpret_cast<DWORD*>(context.Esp);
 			for(int i = 0; i < 100; i++)
 			{
 				DWORD* p = esp + i;
@@ -587,7 +587,7 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	if(i != bpMap.end())
 	{
 		if(restoreOpcode) {
-			PatchMem(address, (void*)&i->second.original_opcode, 1);
+			PatchMem(address, &i->second.original_opcode, 1);
 		}
 
 		bpMap.erase(i);
@@ -611,7 +611,7 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 		dwTimeStamp = pe.GetPEHeader().FileHeader.TimeDateStamp;
 
 		//Entry point
-		pcEntryPoint = (void*)(dwImageBase + pe.GetPEHeader().OptionalHeader.AddressOfEntryPoint);
+		pcEntryPoint = reinterpret_cast<void*>(dwImageBase + pe.GetPEHeader().OptionalHeader.AddressOfEntryPoint);
 
 		//Get Imports
 		pImLoadLibrary = nullptr;
@@ -621,9 +621,9 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 			if(_strcmpi(import.Name.c_str(), "KERNEL32.DLL") == 0) {
 				for(const auto& thunk : import.vecThunkData) {
 					if(_strcmpi(thunk.Name.c_str(), "GETPROCADDRESS") == 0) {
-						pImGetProcAddress = (void*)(dwImageBase + thunk.Address);
+						pImGetProcAddress = reinterpret_cast<void*>(dwImageBase + thunk.Address);
 					} else if(_strcmpi(thunk.Name.c_str(), "LOADLIBRARYA") == 0) {
-						pImLoadLibrary = (void*)(dwImageBase + thunk.Address);
+						pImLoadLibrary = reinterpret_cast<void*>(dwImageBase + thunk.Address);
 					}
 				}
 			}
