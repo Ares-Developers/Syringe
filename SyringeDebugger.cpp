@@ -49,8 +49,9 @@ bool SyringeDebugger::SetBP(void* address)
 	//save overwritten code and set INT 3
 	if(bpMap[address].original_opcode == 0x00)
 	{
+		BYTE buffer = INT3;
 		ReadMem(address, &bpMap[address].original_opcode, 1);
-		return PatchMem(address, (LPVOID)&INT3, 1);
+		return PatchMem(address, &buffer, 1);
 	}
 	return true;
 }
@@ -89,8 +90,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		//fix single step repetition issues
 		if(context.EFlags & 0x100)
 		{
+			BYTE buffer = INT3;
 			context.EFlags &= ~0x100;
-			PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
+			PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, &buffer, 1);
 		}
 
 		//Load DLLs and retrieve proc addresses
@@ -323,7 +325,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	}
 	else if(exceptCode == EXCEPTION_SINGLE_STEP)
 	{
-		PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, (LPVOID)&INT3, 1);
+		BYTE buffer = INT3;
+		PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, &buffer, 1);
 
 		HANDLE hThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
 		CONTEXT context;

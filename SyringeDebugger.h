@@ -14,7 +14,7 @@
 
 #define INIT 0x00
 
-const unsigned char INT3 = 0xCC;	//trap to debugger interupt opcode.
+static const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
 									//was some static const w/e shit, caused errors =S   -pd
 static const BYTE NOP = 0x90;
 
