@@ -16,7 +16,7 @@
 
 const unsigned char INT3 = 0xCC;	//trap to debugger interupt opcode.
 									//was some static const w/e shit, caused errors =S   -pd
-const unsigned char NOP = 0x90;
+static const BYTE NOP = 0x90;
 
 class SyringeDebugger
 {

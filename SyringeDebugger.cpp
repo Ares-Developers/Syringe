@@ -283,11 +283,11 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//write NOPs
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
+								BYTE buffer = NOP;
 								int n_nop = first->num_overridden - 5;
-								if(n_nop > 0)
-								{
-									for(int i = 0; i < n_nop; i++)
-										PatchMem(p_original_code + 0x05 + i, (void*)&NOP, 1);
+
+								for(int i = 0; i < n_nop; ++i) {
+									PatchMem(&p_original_code[i + 5], &buffer, 1);
 								}
 							}
 						}
