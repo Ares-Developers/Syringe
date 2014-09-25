@@ -20,7 +20,7 @@ void CRC32::reset()
 
 void CRC32::initialize()
 {
-	for(int i = 0; i<256; ++i)
+	for(unsigned int i = 0; i < 256; ++i)
 	{
 		unsigned int value = i;
 
@@ -46,7 +46,7 @@ unsigned int CRC32::compute(void* buffer, long long length)
 {
 	for(long long i = 0; i < length; ++i)
 	{
-		unsigned char byte = static_cast<char*>(buffer)[i];
+		unsigned char byte = static_cast<unsigned char*>(buffer)[i];
 		unsigned char index = (_value & 0xFF) ^ byte;
 		_value = (_value >> 8) ^ table[index];
 	}
