@@ -47,10 +47,12 @@ VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 bool SyringeDebugger::SetBP(void* address)
 {
 	//save overwritten code and set INT 3
-	if(bpMap[address].original_opcode == 0x00)
+	auto& opcode = bpMap[address].original_opcode;
+
+	if(opcode == 0x00)
 	{
 		BYTE buffer = INT3;
-		ReadMem(address, &bpMap[address].original_opcode, 1);
+		ReadMem(address, &opcode, 1);
 		return PatchMem(address, &buffer, 1);
 	}
 	return true;
