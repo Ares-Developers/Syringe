@@ -187,4 +187,4 @@ struct SyringeHandshakeInfo
 	char* Message;
 };
 
-typedef HRESULT(__cdecl *SYRINGEHANDSHAKEFUNC)(SyringeHandshakeInfo*);
+using SYRINGEHANDSHAKEFUNC = HRESULT(__cdecl *)(SyringeHandshakeInfo*);

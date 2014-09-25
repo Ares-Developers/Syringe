@@ -14,7 +14,7 @@ struct FileHandleDeleter {
 };
 
 struct ThreadHandleDeleter {
-	typedef HANDLE pointer;
+	using pointer = HANDLE;
 
 	void operator () (pointer handle) const {
 		if(handle) {
@@ -24,7 +24,7 @@ struct ThreadHandleDeleter {
 };
 
 struct ModuleHandleDeleter {
-	typedef HMODULE pointer;
+	using pointer = HMODULE;
 
 	void operator () (pointer handle) const {
 		if(handle) {
@@ -34,7 +34,7 @@ struct ModuleHandleDeleter {
 };
 
 struct FindHandleDeleter {
-	typedef HANDLE pointer;
+	using pointer = HANDLE;
 
 	void operator () (pointer handle) const {
 		if(handle != INVALID_HANDLE_VALUE) {
