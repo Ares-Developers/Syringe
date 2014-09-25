@@ -817,7 +817,7 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 {
 	if(auto hLib = ModuleHandle(LoadLibrary(lib)))
 	{
-		if(FARPROC hProc = GetProcAddress(hLib, "SyringeHandshake"))
+		if(auto hProc = GetProcAddress(hLib, "SyringeHandshake"))
 		{
 			Log::SelWriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
 			char buffer[0x101] = {0}; // one more than we tell the dll
@@ -833,8 +833,8 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 			shInfo.Message = buffer;
 			shInfo.cchMessage = sizeof(buffer) - 1;
 
-			SYRINGEHANDSHAKEFUNC func = (SYRINGEHANDSHAKEFUNC)hProc;
-			HRESULT res = func(&shInfo);
+			auto func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
+			auto res = func(&shInfo);
 
 			if(SUCCEEDED(res))
 			{
