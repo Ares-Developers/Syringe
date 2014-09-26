@@ -46,10 +46,11 @@ bool PortableExecutable::ReadFile(std::string filename)
 					}
 
 					//Imports
-					int import_desc_count = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size / sizeof(IMAGE_IMPORT_DESCRIPTOR) - 1; //minus one for end of array
-					if(import_desc_count > 0)
+					size_t import_desc_count = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+					if(import_desc_count > 1)
 					{
-						std::vector<IMAGE_IMPORT_DESCRIPTOR> import_desc(import_desc_count);
+						// minus one for end of array
+						std::vector<IMAGE_IMPORT_DESCRIPTOR> import_desc(import_desc_count - 1);
 
 						fseek(
 							F,
