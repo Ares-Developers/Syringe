@@ -758,16 +758,16 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 }
 
 bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const {
-	auto hostSz = sizeof(hostdecl);
+	const auto hostSz = sizeof(hostdecl);
 	auto hostCount = hosts.SizeOfRawData / hostSz;
 	auto hostsPtr = hosts.PointerToRawData;
+	std::string hostName;
 	for(decltype(hostCount) ix = 0; ix < hostCount; ++ix) {
 		hostdecl h;
 		if(DLL.ReadBytes(hostsPtr, hostSz, reinterpret_cast<void *>(&h))) {
 			hostsPtr += hostSz;
 			if(h.hostNamePtr) {
 				auto rawHostNamePtr = DLL.VirtualToRaw(h.hostNamePtr - DLL.GetImageBase());
-				std::string hostName;
 				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
 					hostName += ".exe";
 					if(!_strcmpi(hostName.c_str(), exe.c_str())) {
@@ -786,17 +786,17 @@ bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECT
 }
 
 bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer) {
-	auto Sz = sizeof(hookdecl);
+	const auto Sz = sizeof(hookdecl);
 	auto Count = hooks.SizeOfRawData / Sz;
 	auto Ptr = hooks.PointerToRawData;
 
+	std::string hookName;
 	for(decltype(Count) ix = 0; ix < Count; ++ix) {
 		hookdecl h;
 		if(DLL.ReadBytes(Ptr, Sz, reinterpret_cast<void *>(&h))) {
 			Ptr += Sz;
 			if(h.hookNamePtr) {
 				auto rawHookNamePtr = DLL.VirtualToRaw(h.hookNamePtr - DLL.GetImageBase());
-				std::string hookName;
 				if(DLL.ReadCString(rawHookNamePtr, hookName)) {
 					auto eip = reinterpret_cast<void *>(h.hookAddr);
 					buffer.add(eip, DLL.GetFilename(), hookName.c_str(), h.hookSize);
