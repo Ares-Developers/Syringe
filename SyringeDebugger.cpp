@@ -682,8 +682,6 @@ void SyringeDebugger::FindDLLs()
 			PortableExecutable DLL;
 			if(DLL.ReadFile(fn)) {
 				DLL.OpenHandle();
-				DWORD dwImageBase = DLL.GetImageBase();
-
 				HookBuffer buffer;
 
 				bool canLoad = false;
