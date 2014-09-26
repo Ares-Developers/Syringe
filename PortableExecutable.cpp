@@ -95,7 +95,7 @@ bool PortableExecutable::ReadFile(std::string filename)
 								if(thunk.uThunkData.u1.AddressOfData & 0x80000000)
 								{
 									thunk.bIsOrdinal = true;
-									thunk.Ordinal = thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF;
+									thunk.Ordinal = static_cast<int>(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFFu);
 								}
 								else
 								{

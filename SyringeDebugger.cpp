@@ -694,7 +694,7 @@ void SyringeDebugger::FindDLLs()
 				if(canLoad) {
 					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn.c_str());
 
-					if(Handshake(DLL.GetFilename(), buffer.count, buffer.checksum.value(), canLoad)) {
+					if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
 						// canLoad has been updated already
 					} else if(auto hosts = DLL.FindSection(".syexe00")) {
 						canLoad = CanHostDLL(DLL, *hosts);

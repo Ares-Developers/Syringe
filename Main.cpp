@@ -26,7 +26,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if(args)
 			{
-				std::string file(fn, args - fn);
+				std::string file(fn, static_cast<unsigned int>(args - fn));
 				++args;
 
 				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
