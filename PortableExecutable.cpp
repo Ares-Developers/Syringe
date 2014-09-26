@@ -40,26 +40,17 @@ bool PortableExecutable::ReadFile(std::string filename)
 				{
 					//Sections
 					vecPESections.resize(uPEHeader.FileHeader.NumberOfSections);
-					for(auto& section : vecPESections)
-					{
-						fread(&section, sizeof(IMAGE_SECTION_HEADER), 1, F);
-					}
+					fread(&vecPESections[0], sizeof(IMAGE_SECTION_HEADER), vecPESections.size(), F);
 
 					//Imports
-					size_t import_desc_count = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+					auto& Imports = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+					size_t import_desc_count = Imports.Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 					if(import_desc_count > 1)
 					{
 						// minus one for end of array
 						std::vector<IMAGE_IMPORT_DESCRIPTOR> import_desc(import_desc_count - 1);
-
-						fseek(
-							F,
-							static_cast<long>(VirtualToRaw(uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)),
-							SEEK_SET);
-
-						for(auto& desc : import_desc) {
-							fread(&desc, sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, F);
-						}
+						fseek(F, static_cast<long>(VirtualToRaw(Imports.VirtualAddress)), SEEK_SET);
+						fread(&import_desc[0], sizeof(IMAGE_IMPORT_DESCRIPTOR), import_desc.size(), F);
 
 						for(const auto& desc : import_desc)
 						{
