@@ -27,12 +27,12 @@ bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 	return retVal;
 }
 
-bool SyringeDebugger::PatchMem(void* address, void* buffer, DWORD size)
+bool SyringeDebugger::PatchMem(void* address, const void* buffer, DWORD size)
 {
 	return (WriteProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) != FALSE);
 }
 
-bool SyringeDebugger::ReadMem(void* address, void* buffer, DWORD size)
+bool SyringeDebugger::ReadMem(const void* address, void* buffer, DWORD size)
 {
 	DWORD read;
 	ReadProcessMemory(pInfo.hProcess, address, buffer, size, &read);

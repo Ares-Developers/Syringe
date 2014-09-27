@@ -45,8 +45,8 @@ public:
 
 	//Memory
 	VirtualMemoryHandle AllocMem(void* address, size_t size);
-	bool PatchMem(void* address, void* buffer, DWORD size);
-	bool ReadMem(void* address, void* buffer, DWORD size);
+	bool PatchMem(void* address, const void* buffer, DWORD size);
+	bool ReadMem(const void* address, void* buffer, DWORD size);
 
 	//Syringe
 	bool RetrieveInfo(std::string filename);
