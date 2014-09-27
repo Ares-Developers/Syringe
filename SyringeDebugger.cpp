@@ -171,7 +171,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			{
 				Log::SelWriteLine("SyringeDebugger::HandleException: Creating code hooks.");
 
-				BYTE code_call[] =
+				static const BYTE code_call[] =
 				{
 					0x60, 0x9C, //PUSHAD, PUSHFD
 					0x68, INIT, INIT, INIT, INIT, //PUSH HookAddress
@@ -185,8 +185,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 					0xFF, 0x25, INIT, INIT, INIT, INIT, //JMP ds:ReturnEIP
 				};
 
-				BYTE jmp_back[] = {0xE9, INIT, INIT, INIT, INIT, };
-				BYTE jmp[] = {0xE9, INIT, INIT, INIT, INIT, };
+				static const BYTE jmp_back[] = {0xE9, INIT, INIT, INIT, INIT, };
+				static const BYTE jmp[] = {0xE9, INIT, INIT, INIT, INIT, };
 
 				for(auto& it : bpMap)
 				{
@@ -480,7 +480,7 @@ bool SyringeDebugger::Run(char* params)
 	pcLoadLibraryEnd = pAlloc;
 	pcLoadLibrary = pAlloc + 1;
 
-	BYTE cLoadLibrary[] = {
+	static const BYTE cLoadLibrary[] = {
 		0x90, // NOP
 		0x50, // push eax
 		0x51, // push ecx
