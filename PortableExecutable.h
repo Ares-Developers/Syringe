@@ -75,7 +75,6 @@ public:
 	const IMAGE_SECTION_HEADER * FindSection(const char * findName) const;
 
 	void OpenHandle();
-	void CloseHandle();
 };
 
 #endif

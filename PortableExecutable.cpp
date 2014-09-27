@@ -161,13 +161,10 @@ const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findNam
 }
 
 void PortableExecutable::OpenHandle() {
-	CloseHandle();
+	Handle.clear();
 
 	if(!Filename.empty()) {
 		Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
 	}
 }
 
-void PortableExecutable::CloseHandle() {
-	Handle.clear();
-}

@@ -713,7 +713,6 @@ void SyringeDebugger::FindDLLs()
 				} else if(!buffer.hooks.empty()) {
 					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
 				}
-				DLL.CloseHandle();
 
 			//} else {
 			//	Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
