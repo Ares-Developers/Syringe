@@ -217,7 +217,6 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 							if(auto p_code_base = AllocMem(nullptr, sz))
 							{
-								DWORD rel;
 								BYTE* const base = p_code_base;
 								BYTE* p_code = base;
 
@@ -230,7 +229,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
 										PatchMem(p_code + 0x03, const_cast<void**>(&it.first), 4); //PUSH HookAddress
 
-										rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x0D, reinterpret_cast<DWORD>(hook.proc_address));
+										const auto rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x0D, reinterpret_cast<DWORD>(hook.proc_address));
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
 										PatchMem(p_code + 0x11, &pdReturnEIP, 4); //MOV
 										PatchMem(p_code + 0x19, &pdReturnEIP, 4); //CMP
@@ -253,7 +252,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								}
 
 								//Write the jump back
-								rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x05, reinterpret_cast<DWORD>(it.first) + 0x05);
+								const auto rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x05, reinterpret_cast<DWORD>(it.first) + 0x05);
 								PatchMem(p_code, jmp_back, sizeof(jmp_back));
 								PatchMem(p_code + 0x01, &rel, 4);
 
@@ -282,9 +281,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//Patch original code
 								BYTE* p_original_code = static_cast<BYTE*>(it.first);
 
-								rel = RelativeOffset(reinterpret_cast<DWORD>(p_original_code) + 5, reinterpret_cast<DWORD>(base));
+								const auto rel2 = RelativeOffset(reinterpret_cast<DWORD>(p_original_code) + 5, reinterpret_cast<DWORD>(base));
 								PatchMem(p_original_code, jmp, sizeof(jmp));
-								PatchMem(p_original_code + 0x01, &rel, 4);
+								PatchMem(p_original_code + 0x01, &rel2, 4);
 
 								//write NOPs
 								//only use the information of the first working hook, however, every hook
