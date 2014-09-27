@@ -51,9 +51,17 @@ private:
 	FileHandle Handle;
 	
 public:
-	bool ReadFile(std::string filename);
+	PortableExecutable(std::string filename) : Filename(std::move(filename)) {
+		if(!Filename.empty()) {
+			Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
+		}
+
+		this->ReadFile();
+	};
 
 	const char * GetFilename() const { return Filename.c_str(); }
+
+	bool IsValid() const { return Handle != nullptr; }
 
 	//PE
 	const IMAGE_DOS_HEADER& GetDOSHeader() const { return uDOSHeader; }
@@ -74,7 +82,8 @@ public:
 
 	const IMAGE_SECTION_HEADER * FindSection(const char * findName) const;
 
-	void OpenHandle();
+private:
+	bool ReadFile();
 };
 
 #endif
