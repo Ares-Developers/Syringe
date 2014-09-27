@@ -76,7 +76,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 	if(exceptCode == EXCEPTION_BREAKPOINT)
 	{
-		HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
+		auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+		HANDLE currentThread = threadInfo.Thread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -94,7 +95,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		{
 			BYTE buffer = INT3;
 			context.EFlags &= ~0x100;
-			PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, &buffer, 1);
+			PatchMem(threadInfo.lastBP, &buffer, 1);
 		}
 
 		//Load DLLs and retrieve proc addresses
@@ -141,7 +142,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				context.ContextFlags = CONTEXT_CONTROL;
 				SetThreadContext(currentThread, &context);
 
-				threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
+				threadInfo.lastBP = exceptAddr;
 
 				return DBG_CONTINUE;
 			}
@@ -157,7 +158,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				context.ContextFlags = CONTEXT_CONTROL;
 				SetThreadContext(currentThread, &context);
 
-				threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
+				threadInfo.lastBP = exceptAddr;
 
 				return DBG_CONTINUE;
 			}
@@ -309,7 +310,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			context.ContextFlags = CONTEXT_CONTROL;
 			SetThreadContext(currentThread, &context);
 
-			threadInfoMap[dbgEvent.dwThreadId].lastBP = exceptAddr;
+			threadInfo.lastBP = exceptAddr;
 
 			return DBG_CONTINUE;
 		} 
@@ -326,9 +327,10 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	else if(exceptCode == EXCEPTION_SINGLE_STEP)
 	{
 		BYTE buffer = INT3;
-		PatchMem(threadInfoMap[dbgEvent.dwThreadId].lastBP, &buffer, 1);
+		const auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+		PatchMem(threadInfo.lastBP, &buffer, 1);
 
-		HANDLE hThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
+		HANDLE hThread = threadInfo.Thread;
 		CONTEXT context;
 
 		context.ContextFlags = CONTEXT_CONTROL;
@@ -348,8 +350,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		if(!bAVLogged)
 		{
 			//Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
-
-			HANDLE currentThread = threadInfoMap[dbgEvent.dwThreadId].Thread;
+			const auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
 
 			char* access = nullptr;
