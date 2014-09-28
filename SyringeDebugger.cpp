@@ -818,7 +818,7 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 			shInfo.exeCRC = dwExeCRC;
 			shInfo.exeTimestamp = dwTimeStamp;
 			shInfo.Message = buffer;
-			shInfo.cchMessage = sizeof(buffer) - 1;
+			shInfo.cchMessage = _countof(buffer) - 1;
 
 			auto func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
 			auto res = func(&shInfo);
