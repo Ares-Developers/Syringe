@@ -54,7 +54,7 @@ public:
 
 private:
 	//Helper Functions
-	DWORD RelativeOffset(DWORD from, DWORD to);
+	DWORD RelativeOffset(const void* from, const void* to);
 
 	//ThreadInfo
 	struct threadInfo

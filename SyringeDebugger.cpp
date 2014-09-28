@@ -58,8 +58,11 @@ bool SyringeDebugger::SetBP(void* address)
 	return true;
 }
 
-DWORD SyringeDebugger::RelativeOffset(DWORD from, DWORD to)
+DWORD SyringeDebugger::RelativeOffset(const void* pFrom, const void* pTo)
 {
+	auto from = reinterpret_cast<DWORD>(pFrom);
+	auto to = reinterpret_cast<DWORD>(pTo);
+
 	if(from == to) {
 		return 0;
 	} else if(from < to) {
@@ -210,7 +213,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
 										PatchMem(p_code + 0x03, const_cast<void**>(&it.first), 4); //PUSH HookAddress
 
-										const auto rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x0D, reinterpret_cast<DWORD>(hook.proc_address));
+										const auto rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
 										PatchMem(p_code + 0x11, &pdReturnEIP, 4); //MOV
 										PatchMem(p_code + 0x19, &pdReturnEIP, 4); //CMP
@@ -233,7 +236,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								}
 
 								//Write the jump back
-								const auto rel = RelativeOffset(reinterpret_cast<DWORD>(p_code) + 0x05, reinterpret_cast<DWORD>(it.first) + 0x05);
+								const auto rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
 								PatchMem(p_code, jmp_back, sizeof(jmp_back));
 								PatchMem(p_code + 0x01, &rel, 4);
 
@@ -262,7 +265,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//Patch original code
 								BYTE* p_original_code = static_cast<BYTE*>(it.first);
 
-								const auto rel2 = RelativeOffset(reinterpret_cast<DWORD>(p_original_code) + 5, reinterpret_cast<DWORD>(base));
+								const auto rel2 = RelativeOffset(p_original_code + 5, base);
 								PatchMem(p_original_code, jmp, sizeof(jmp));
 								PatchMem(p_original_code + 0x01, &rel2, 4);
 
