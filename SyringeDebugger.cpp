@@ -99,12 +99,11 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		}
 
 		//Load DLLs and retrieve proc addresses
-		if(!bDLLsLoaded) //&& (exceptAddr==pcEntryPoint || exceptAddr==pcLoadLibraryEnd))
+		if(!bDLLsLoaded)
 		{
 			//Restore
 			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
 
-			bool doPatch = true;
 			if(loop_LoadLibrary == v_AllHooks.end())
 				loop_LoadLibrary = v_AllHooks.begin();
 			else
@@ -112,14 +111,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				const auto& hook = *loop_LoadLibrary;
 				ReadMem(pdProcAddress, &hook->proc_address, 4);
 
-				if(hook->proc_address) {
-					//Log::SelWriteLine(
-					//	"SyringeDebugger::HandleException: Loaded ProcAddress: %s - %s - 0x%08X",
-					//	hook->lib,
-					//	hook->proc,
-					//	hook->proc_address);
-				} else {
-					doPatch = false;
+				if(!hook->proc_address) {
 					Log::SelWriteLine(
 						"SyringeDebugger::HandleException: Could not retrieve ProcAddress for: %s - %s",
 						hook->lib, hook->proc);
@@ -130,11 +122,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 			if(loop_LoadLibrary != v_AllHooks.end())
 			{
-				//if(doPatch) {
-					const auto& hook = *loop_LoadLibrary;
-					PatchMem(pdLibName, hook->lib, MAX_NAME_LENGTH);
-					PatchMem(pdProcName, hook->proc, MAX_NAME_LENGTH);
-				//}
+				const auto& hook = *loop_LoadLibrary;
+				PatchMem(pdLibName, hook->lib, MAX_NAME_LENGTH);
+				PatchMem(pdProcName, hook->proc, MAX_NAME_LENGTH);
 
 				context.Eip = reinterpret_cast<DWORD>(pcLoadLibrary);
 			}
