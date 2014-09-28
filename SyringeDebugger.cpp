@@ -137,15 +137,6 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				//}
 
 				context.Eip = reinterpret_cast<DWORD>(pcLoadLibrary);
-
-				//single step mode
-				context.EFlags |= 0x100;
-				context.ContextFlags = CONTEXT_CONTROL;
-				SetThreadContext(currentThread, &context);
-
-				threadInfo.lastBP = exceptAddr;
-
-				return DBG_CONTINUE;
 			}
 			else
 			{
@@ -153,16 +144,16 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				bDLLsLoaded = true;
 
 				context.Eip = reinterpret_cast<DWORD>(pcEntryPoint);
-
-				//single step mode
-				context.EFlags |= 0x100;
-				context.ContextFlags = CONTEXT_CONTROL;
-				SetThreadContext(currentThread, &context);
-
-				threadInfo.lastBP = exceptAddr;
-
-				return DBG_CONTINUE;
 			}
+
+			//single step mode
+			context.EFlags |= 0x100;
+			context.ContextFlags = CONTEXT_CONTROL;
+			SetThreadContext(currentThread, &context);
+
+			threadInfo.lastBP = exceptAddr;
+
+			return DBG_CONTINUE;
 		}
 
 		if(exceptAddr == pcEntryPoint)
