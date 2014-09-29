@@ -34,9 +34,7 @@ bool SyringeDebugger::PatchMem(void* address, const void* buffer, DWORD size)
 
 bool SyringeDebugger::ReadMem(const void* address, void* buffer, DWORD size)
 {
-	DWORD read;
-	ReadProcessMemory(pInfo.hProcess, address, buffer, size, &read);
-	return (read == size);
+	return (ReadProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) != FALSE);
 }
 
 VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
