@@ -336,7 +336,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
 
-			char* access = nullptr;
+			const char* access = nullptr;
 			switch(dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[0])
 			{
 			case 0: access = "read from"; break;
