@@ -6,7 +6,6 @@
 #include "PortableExecutable.h"
 #include <iostream>
 #include <map>
-#include <hash_map>
 #include "CRC32.h"
 
 #define	MAX_NAME_LENGTH	0x100
