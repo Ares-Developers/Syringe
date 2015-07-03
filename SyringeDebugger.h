@@ -9,13 +9,10 @@
 #include "CRC32.h"
 
 #define	MAX_NAME_LENGTH	0x100
-#define EXE_NAME_LENGTH	0x100
 
-static const BYTE INIT = 0x00;
-
-static const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
-									//was some static const w/e shit, caused errors =S   -pd
-static const BYTE NOP = 0x90;
+const BYTE INIT = 0x00;
+const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
+const BYTE NOP = 0x90;
 
 class SyringeDebugger
 {
@@ -40,7 +37,7 @@ public:
 
 	//Breakpoints
 	bool SetBP(void* address);
-	void RemoveBP(void* address, bool restoreOpcode);
+	void RemoveBP(LPVOID address, bool restoreOpcode);
 
 	//Memory
 	VirtualMemoryHandle AllocMem(void* address, size_t size);
