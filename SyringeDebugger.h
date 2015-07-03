@@ -8,14 +8,14 @@
 #include <map>
 #include "CRC32.h"
 
-const size_t MaxNameLength = 0x100u;
-
-const BYTE INIT = 0x00;
-const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
-const BYTE NOP = 0x90;
-
 class SyringeDebugger
 {
+	static const size_t MaxNameLength = 0x100u;
+
+	static const BYTE INIT = 0x00;
+	static const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
+	static const BYTE NOP = 0x90;
+
 public:
 	SyringeDebugger() :
 		bAttached(false),
