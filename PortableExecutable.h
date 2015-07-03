@@ -1,7 +1,5 @@
 //A class to parse PE files
-
-#ifndef PE_H
-#define PE_H
+#pragma once
 
 #include "Handle.h"
 
@@ -85,5 +83,3 @@ public:
 private:
 	bool ReadFile();
 };
-
-#endif

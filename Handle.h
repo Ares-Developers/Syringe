@@ -1,5 +1,4 @@
-#ifndef FILEHANDLE_H
-#define FILEHANDLE_H
+#pragma once
 
 #include <stdio.h>
 #include <Windows.h>
@@ -137,4 +136,3 @@ private:
 	HANDLE Process;
 };
 
-#endif

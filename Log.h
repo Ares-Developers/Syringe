@@ -1,5 +1,4 @@
-#ifndef LOG_H
-#define LOG_H
+#pragma once
 
 #include "Handle.h"
 
@@ -39,5 +38,3 @@ public:
 	static void SelWriteLine();
 	static void SelWriteLine(const char*, ...);
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRC32_H
-#define CRC32_H
+#pragma once
 
 class CRC32
 {
@@ -20,5 +19,3 @@ private:
 
 	static const unsigned int polynomial = 0xEDB88320U; // bit-reverse 0x04C11DB7U;
 };
-
-#endif

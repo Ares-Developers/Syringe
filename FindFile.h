@@ -1,5 +1,4 @@
-#ifndef FINDFILE_H
-#define FINDFILE_H
+#pragma once
 
 #include "Handle.h"
 
@@ -56,5 +55,3 @@ private:
 	FindHandle Handle;
 	bool Valid;
 };
-
-#endif
