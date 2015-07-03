@@ -8,7 +8,7 @@
 #include <map>
 #include "CRC32.h"
 
-#define	MAX_NAME_LENGTH	0x100
+const size_t MaxNameLength = 0x100u;
 
 const BYTE INIT = 0x00;
 const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
@@ -71,8 +71,8 @@ private:
 	//Breakpoints
 	struct Hook
 	{
-		char lib[MAX_NAME_LENGTH];
-		char proc[MAX_NAME_LENGTH];
+		char lib[MaxNameLength];
+		char proc[MaxNameLength];
 		void* proc_address;
 
 		size_t num_overridden;
@@ -141,8 +141,8 @@ private:
 
 		void add(void* eip, const char* filename, const char* proc, size_t num_overridden) {
 			Hook hook;
-			strncpy_s(hook.lib, filename, MAX_NAME_LENGTH - 1);
-			strncpy_s(hook.proc, proc, MAX_NAME_LENGTH - 1);
+			strncpy_s(hook.lib, filename, _TRUNCATE);
+			strncpy_s(hook.proc, proc, _TRUNCATE);
 			hook.proc_address = nullptr;
 			hook.num_overridden = num_overridden;
 

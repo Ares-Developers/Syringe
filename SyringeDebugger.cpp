@@ -124,8 +124,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			if(loop_LoadLibrary != v_AllHooks.end())
 			{
 				const auto& hook = *loop_LoadLibrary;
-				PatchMem(pdLibName, hook->lib, MAX_NAME_LENGTH);
-				PatchMem(pdProcName, hook->proc, MAX_NAME_LENGTH);
+				PatchMem(pdLibName, hook->lib, MaxNameLength);
+				PatchMem(pdProcName, hook->proc, MaxNameLength);
 
 				context.Eip = reinterpret_cast<DWORD>(pcLoadLibrary);
 			}
@@ -453,7 +453,7 @@ bool SyringeDebugger::Run(char* params)
 
 	//only needed at start
 	pdLibName = pdData + 4;
-	pdProcName = pdData + 4 + MAX_NAME_LENGTH;
+	pdProcName = pdData + 4 + MaxNameLength;
 
 	Log::SelWriteLine("SyringeDebugger::Run: Writing DLL loader & caller code...");
 
@@ -723,11 +723,11 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
-				char func[MAX_NAME_LENGTH];
+				char func[MaxNameLength];
 				size_t n_over = 0;
 
 				// parse the line (length is optional, defaults to 0)
-				if(sscanf_s(line, "%x = %[^ \t;,\r\n] , %x", &eip, func, MAX_NAME_LENGTH, &n_over) > 2) {
+				if(sscanf_s(line, "%x = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) > 2) {
 					hooks.add(eip, lib.c_str(), func, n_over);
 				}
 			}
