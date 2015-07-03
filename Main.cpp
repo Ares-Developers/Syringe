@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define VERSION_STRING	"Syringe 0.7.0.5"
+auto const VersionString = "Syringe 0.7.0.5";
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -12,7 +12,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Log::SelOpen();
 
-	Log::SelWriteLine(VERSION_STRING);
+	Log::SelWriteLine(VersionString);
 	Log::SelWriteLine("===============");
 	Log::SelWriteLine();
 	Log::SelWriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
@@ -70,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		else
 		{
 			MessageBoxA(nullptr, "Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
-				VERSION_STRING, MB_OK | MB_ICONINFORMATION);
+				VersionString, MB_OK | MB_ICONINFORMATION);
 
 			Log::SelWriteLine("WinMain: ERROR: No command line arguments given, exiting...");
 		}
