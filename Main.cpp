@@ -7,6 +7,10 @@ auto const VersionString = "Syringe 0.7.0.5";
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	UNREFERENCED_PARAMETER(hInstance);
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(nCmdShow);
+
 	Log log("syringe.log");
 	Log::Select(&log);
 
