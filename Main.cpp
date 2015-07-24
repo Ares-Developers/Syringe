@@ -5,12 +5,7 @@
 
 auto const VersionString = "Syringe 0.7.0.5";
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
-{
-	UNREFERENCED_PARAMETER(hInstance);
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(nCmdShow);
-
+int Run(char* const lpCmdLine) {
 	Log log("syringe.log");
 	Log::Select(&log);
 
@@ -83,4 +78,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	Log::SelWriteLine("WinMain: Exiting on failure.");
 	Log::SelClose();
 	return 0;
+}
+
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
+{
+	UNREFERENCED_PARAMETER(hInstance);
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(nCmdShow);
+
+	return Run(lpCmdLine);
 }
