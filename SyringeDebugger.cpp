@@ -56,18 +56,12 @@ bool SyringeDebugger::SetBP(void* address)
 	return true;
 }
 
-DWORD SyringeDebugger::RelativeOffset(const void* pFrom, const void* pTo)
+DWORD __fastcall SyringeDebugger::RelativeOffset(const void* pFrom, const void* pTo)
 {
-	auto from = reinterpret_cast<DWORD>(pFrom);
-	auto to = reinterpret_cast<DWORD>(pTo);
+	auto const from = reinterpret_cast<DWORD>(pFrom);
+	auto const to = reinterpret_cast<DWORD>(pTo);
 
-	if(from == to) {
-		return 0;
-	} else if(from < to) {
-		return to - from;
-	} else { //if(pos > dest)
-		return ~(from - to) + 1;
-	}
+	return to - from;
 }
 
 DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)

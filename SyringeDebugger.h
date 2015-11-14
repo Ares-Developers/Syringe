@@ -50,7 +50,7 @@ public:
 
 private:
 	//Helper Functions
-	DWORD RelativeOffset(const void* from, const void* to);
+	static DWORD __fastcall RelativeOffset(const void* from, const void* to);
 
 	//ThreadInfo
 	struct threadInfo
