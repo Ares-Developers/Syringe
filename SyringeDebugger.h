@@ -126,9 +126,7 @@ private:
 	struct HookBuffer {
 		std::map<void*, std::vector<Hook>> hooks;
 		CRC32 checksum;
-		size_t count;
-
-		HookBuffer() : count(0) {}
+		size_t count{ 0 };
 
 		void add(void* eip, Hook &hook) {
 			auto &h = hooks[eip];
