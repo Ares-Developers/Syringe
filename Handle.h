@@ -5,7 +5,7 @@
 #include <utility>
 
 struct FileHandleDeleter {
-	void operator () (FILE* file) const {
+	void operator () (FILE* file) const noexcept {
 		if(file) {
 			fclose(file);
 		}
@@ -15,7 +15,7 @@ struct FileHandleDeleter {
 struct ThreadHandleDeleter {
 	using pointer = HANDLE;
 
-	void operator () (pointer handle) const {
+	void operator () (pointer handle) const noexcept {
 		if(handle) {
 			CloseHandle(handle);
 		}
@@ -25,7 +25,7 @@ struct ThreadHandleDeleter {
 struct ModuleHandleDeleter {
 	using pointer = HMODULE;
 
-	void operator () (pointer handle) const {
+	void operator () (pointer handle) const noexcept {
 		if(handle) {
 			FreeLibrary(handle);
 		}
@@ -35,7 +35,7 @@ struct ModuleHandleDeleter {
 struct FindHandleDeleter {
 	using pointer = HANDLE;
 
-	void operator () (pointer handle) const {
+	void operator () (pointer handle) const noexcept {
 		if(handle != INVALID_HANDLE_VALUE) {
 			FindClose(handle);
 		}
@@ -45,43 +45,58 @@ struct FindHandleDeleter {
 // owns a resource. not copyable, but movable.
 template <typename T, typename Deleter, T Default = T()>
 struct Handle {
-	explicit Handle(T value = Default) : Value(value) {}
+	constexpr Handle() noexcept = default;
+
+	constexpr explicit Handle(T value) noexcept
+		: Value(value)
+	{ }
 
 	Handle(const Handle&) = delete;
 
-	Handle(Handle&& other) : Value(other.Value) {
-		other.Value = Default;
-	};
+	constexpr Handle(Handle&& other) noexcept
+		: Value(other.release())
+	{ }
 
-	~Handle() {
-		this->clear();
+	~Handle() noexcept {
+		if(this->Value != Default) {
+			Deleter{}(this->Value);
+		}
 	}
 
 	Handle& operator = (const Handle&) = delete;
 
-	Handle& operator = (Handle&& other) {
-		this->clear();
-		this->Value = other.Value;
-		other.Value = Default;
+	Handle& operator = (Handle&& other) noexcept {
+		this->reset(other.release());
 		return *this;
 	}
 
-	operator T () const {
+	constexpr explicit operator bool() const noexcept {
+		return this->Value != Default;
+	}
+
+	constexpr operator T () const noexcept {
 		return this->Value;
 	}
 
-	void clear() {
-		auto tmp = this->Value;
-		this->Value = Default;
+	constexpr T get() const noexcept {
+		return this->Value;
+	}
 
-		if(tmp != Default) {
-			Deleter del;
-			del(tmp);
-		}
+	T release() noexcept {
+		return std::exchange(this->Value, Default);
+	}
+
+	void reset(T value) noexcept {
+		Handle(this->Value);
+		this->Value = value;
+	}
+
+	void clear() noexcept {
+		Handle(std::move(*this));
 	}
 
 private:
-	T Value;
+	T Value{ Default };
 };
 
 using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
