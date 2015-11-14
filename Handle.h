@@ -105,49 +105,55 @@ using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
 using FindHandle = Handle<HANDLE, FindHandleDeleter, INVALID_HANDLE_VALUE>;
 
 struct VirtualMemoryHandle {
-	VirtualMemoryHandle() : Value(nullptr), Process(nullptr) {}
-	VirtualMemoryHandle(HANDLE process, void* address, size_t size) : VirtualMemoryHandle() {
+	VirtualMemoryHandle() noexcept = default;
+
+	VirtualMemoryHandle(HANDLE process, void* address, size_t size) noexcept
+		: Process(process)
+	{
 		if(process && size) {
 			this->Value = VirtualAllocEx(process, address, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 		}
 	}
 
+	VirtualMemoryHandle(void* pAllocated, HANDLE process) noexcept
+		: Value(pAllocated), Process(process)
+	{ }
+
 	VirtualMemoryHandle(const VirtualMemoryHandle&) = delete;
 
-	VirtualMemoryHandle(VirtualMemoryHandle&& other) {
-		*this = std::move(other);
-	};
+	VirtualMemoryHandle(VirtualMemoryHandle&& other) noexcept :
+		Value(std::exchange(other.Value, nullptr)),
+		Process(std::exchange(other.Process, nullptr))
+	{ }
 
-	~VirtualMemoryHandle() {
-		this->clear();
+	~VirtualMemoryHandle() noexcept {
+		if(this->Value && this->Process) {
+			VirtualFreeEx(this->Process, this->Value, 0, MEM_RELEASE);
+		}
 	}
 
 	VirtualMemoryHandle& operator = (const VirtualMemoryHandle&) = delete;
 
-	VirtualMemoryHandle& operator = (VirtualMemoryHandle&& other) {
-		this->clear();
-		std::swap(this->Value, other.Value);
-		std::swap(this->Process, other.Process);
+	VirtualMemoryHandle& operator = (VirtualMemoryHandle&& other) noexcept {
+		VirtualMemoryHandle(this->Value, this->Process);
+		this->Value = std::exchange(other.Value, nullptr);
+		this->Process = std::exchange(other.Process, nullptr);
 		return *this;
 	}
 
-	operator BYTE*() const {
+	operator BYTE*() const noexcept {
+		return this->get();
+	}
+
+	BYTE* get() const noexcept {
 		return static_cast<BYTE*>(this->Value);
 	}
 
-	void clear() {
-		auto val = this->Value;
-		auto proc = this->Process;
-		this->Value = nullptr;
-		this->Process = nullptr;
-
-		if(val && proc) {
-			VirtualFreeEx(proc, val, 0, MEM_RELEASE);
-		}
+	void clear() noexcept {
+		VirtualMemoryHandle(std::move(*this));
 	}
 
 private:
-	void* Value;
-	HANDLE Process;
+	void* Value{ nullptr };
+	HANDLE Process{ nullptr };
 };
-
