@@ -3,14 +3,14 @@
 class CRC32
 {
 public:
-	CRC32();
+	CRC32() noexcept;
 
-	unsigned int compute(void* buffer, long long length);
-	unsigned int value() const;
-	void reset();
+	unsigned int compute(void* buffer, long long length) noexcept;
+	unsigned int value() const noexcept;
+	void reset() noexcept;
 
 private:
-	static void initialize();
+	static void initialize() noexcept;
 
 	static bool initialized;
 	static unsigned int table[256];

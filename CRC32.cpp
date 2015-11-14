@@ -3,7 +3,7 @@
 unsigned int CRC32::table[256];
 bool CRC32::initialized = false;
 
-CRC32::CRC32()
+CRC32::CRC32() noexcept
 {
 	if(!initialized)
 	{
@@ -13,18 +13,18 @@ CRC32::CRC32()
 	reset();
 }
 
-void CRC32::reset()
+void CRC32::reset() noexcept
 {
 	_value = 0xFFFFFFFFU;
 }
 
-void CRC32::initialize()
+void CRC32::initialize() noexcept
 {
 	for(unsigned int i = 0; i < 256; ++i)
 	{
 		unsigned int value = i;
 
-		for(int j = 8; j>0; --j)
+		for(int j = 8; j > 0; --j)
 		{
 			if(value & 1)
 			{
@@ -42,7 +42,7 @@ void CRC32::initialize()
 	initialized = true;
 }
 
-unsigned int CRC32::compute(void* buffer, long long length)
+unsigned int CRC32::compute(void* buffer, long long length) noexcept
 {
 	for(long long i = 0; i < length; ++i)
 	{
@@ -54,7 +54,7 @@ unsigned int CRC32::compute(void* buffer, long long length)
 	return ~_value;
 }
 
-unsigned int CRC32::value() const
+unsigned int CRC32::value() const noexcept
 {
 	return ~_value;
 }
