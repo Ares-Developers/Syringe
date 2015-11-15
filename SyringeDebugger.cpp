@@ -203,7 +203,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 									if(hook.proc_address)
 									{
 										PatchMem(p_code, code_call, sizeof(code_call));	//code
-										PatchMem(p_code + 0x03, const_cast<void**>(&it.first), 4); //PUSH HookAddress
+										PatchMem(p_code + 0x03, &it.first, 4); //PUSH HookAddress
 
 										const auto rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
 										PatchMem(p_code + 0x09, &rel, 4); //CALL
@@ -504,7 +504,7 @@ bool SyringeDebugger::Run(char* params)
 
 	Log::SelWriteLine("SyringeDebugger::Run: Entering debug loop...");
 
-	while(true)
+	for(;;)
 	{
 		WaitForDebugEvent(&dbgEvent, INFINITE);
 
@@ -721,7 +721,7 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 				size_t n_over = 0;
 
 				// parse the line (length is optional, defaults to 0)
-				if(sscanf_s(line, "%x = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) > 2) {
+				if(sscanf_s(line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) > 2) {
 					hooks.add(eip, lib.c_str(), func, n_over);
 				}
 			}
@@ -810,7 +810,7 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 			shInfo.exeCRC = dwExeCRC;
 			shInfo.exeTimestamp = dwTimeStamp;
 			shInfo.Message = buffer;
-			shInfo.cchMessage = _countof(buffer) - 1;
+			shInfo.cchMessage = std::size(buffer) - 1;
 
 			auto func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
 			auto res = func(&shInfo);

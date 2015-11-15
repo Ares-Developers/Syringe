@@ -128,7 +128,7 @@ bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) co
 	if(!Filename.empty()) {
 		assert(Handle);
 		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
-			const size_t sz = 0x100;
+			constexpr size_t sz = 0x100;
 			char tmpBuf[sz];
 
 			tmpBuf[0] = 0;
@@ -145,7 +145,7 @@ bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) co
 const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findName) const {
 	const size_t slen = strlen(findName);
 	assert(slen <= 8);
-	auto found = std::find_if(vecPESections.begin(), vecPESections.end(), [slen, findName](const decltype(*(vecPESections.begin())) & section) -> bool {
+	auto found = std::find_if(vecPESections.begin(), vecPESections.end(), [slen, findName](auto const& section) {
 		return !memcmp(findName, section.Name, slen);
 	});
 
