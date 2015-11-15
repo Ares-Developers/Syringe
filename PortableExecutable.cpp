@@ -51,13 +51,16 @@ bool PortableExecutable::ReadFile()
 
 					for(const auto& desc : import_desc)
 					{
-						PEImport current_import;
+						// insert one, then fill in-place
+						vecImports.emplace_back();
+						auto& current_import = vecImports.back();
+
 						current_import.uDesc = desc;
 						if(!current_import.uDesc.Name) {
 							break;
 						}
 
-						char name_buf[0x100] = "\0";
+						char name_buf[0x100];
 						fseek(F, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
 						fgets(name_buf, 0x100, F);
 
@@ -95,8 +98,6 @@ bool PortableExecutable::ReadFile()
 								thunk.Name = name_buf;
 							}
 						}
-
-						vecImports.push_back(current_import);
 					}
 				}
 
