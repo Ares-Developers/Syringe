@@ -154,20 +154,16 @@ private:
 	bool Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk);
 };
 
-#pragma pack(push, 16)
-
-__declspec(align(16)) struct hookdecl {
+struct alignas(16) hookdecl {
 	unsigned int hookAddr;
 	unsigned int hookSize;
 	DWORD hookNamePtr;
 };
 
-__declspec(align(16)) struct hostdecl {
+struct alignas(16) hostdecl {
 	unsigned int hostChecksum;
 	DWORD hostNamePtr;
 };
-
-#pragma pack(pop)
 
 struct SyringeHandshakeInfo
 {
