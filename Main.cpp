@@ -6,15 +6,12 @@
 auto const VersionString = "Syringe 0.7.0.5";
 
 int Run(char* const lpCmdLine) {
-	Log log("syringe.log");
-	Log::Select(&log);
+	Log::Open("syringe.log");
 
-	Log::SelOpen();
-
-	Log::SelWriteLine(VersionString);
-	Log::SelWriteLine("===============");
-	Log::SelWriteLine();
-	Log::SelWriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
+	Log::WriteLine(VersionString);
+	Log::WriteLine("===============");
+	Log::WriteLine();
+	Log::WriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
 
 	if(lpCmdLine)
 	{
@@ -28,22 +25,21 @@ int Run(char* const lpCmdLine) {
 				std::string file(fn, static_cast<unsigned int>(args - fn));
 				++args;
 
-				Log::SelWriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
-				Log::SelWriteLine();
+				Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
+				Log::WriteLine();
 				SyringeDebugger Debugger;
 				if(Debugger.RetrieveInfo(file))
 				{
-					Log::SelWriteLine("WinMain: SyringeDebugger::FindDLLs();");
-					Log::SelWriteLine();
+					Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
+					Log::WriteLine();
 					Debugger.FindDLLs();
 
-					Log::SelWriteLine("WinMain: SyringeDebugger::Run(\"%s\");", args);
-					Log::SelWriteLine();
+					Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", args);
+					Log::WriteLine();
 					Debugger.Run(args);
 
-					Log::SelWriteLine("WinMain: SyringeDebugger::Run finished.", args);
-					Log::SelWriteLine("WinMain: Exiting on success.");
-					Log::SelClose();
+					Log::WriteLine("WinMain: SyringeDebugger::Run finished.", args);
+					Log::WriteLine("WinMain: Exiting on success.");
 					return 0;
 				}
 				else
@@ -53,7 +49,7 @@ int Run(char* const lpCmdLine) {
 
 					MessageBoxA(nullptr, msg, "Syringe", MB_OK | MB_ICONERROR);
 
-					Log::SelWriteLine("WinMain: ERROR: Could not load executable file, exiting...");
+					Log::WriteLine("WinMain: ERROR: Could not load executable file, exiting...");
 				}
 			}
 			else
@@ -63,7 +59,7 @@ int Run(char* const lpCmdLine) {
 
 				MessageBoxA(nullptr, msg, "Syringe", MB_OK | MB_ICONERROR);
 
-				Log::SelWriteLine("WinMain: ERROR: Command line arguments could not be evaluated, exiting...");
+				Log::WriteLine("WinMain: ERROR: Command line arguments could not be evaluated, exiting...");
 			}
 		}
 		else
@@ -71,12 +67,11 @@ int Run(char* const lpCmdLine) {
 			MessageBoxA(nullptr, "Syringe cannot be run just like that.\r\nPlease run a Syringe control file!",
 				VersionString, MB_OK | MB_ICONINFORMATION);
 
-			Log::SelWriteLine("WinMain: ERROR: No command line arguments given, exiting...");
+			Log::WriteLine("WinMain: ERROR: No command line arguments given, exiting...");
 		}
 	}
 
-	Log::SelWriteLine("WinMain: Exiting on failure.");
-	Log::SelClose();
+	Log::WriteLine("WinMain: Exiting on failure.");
 	return 0;
 }
 

@@ -107,7 +107,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				ReadMem(pdProcAddress, &hook->proc_address, 4);
 
 				if(!hook->proc_address) {
-					Log::SelWriteLine(
+					Log::WriteLine(
 						"SyringeDebugger::HandleException: Could not retrieve ProcAddress for: %s - %s",
 						hook->lib, hook->proc);
 				}
@@ -125,7 +125,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			}
 			else
 			{
-				Log::SelWriteLine("SyringeDebugger::HandleException: Finished retrieving proc addresses.");
+				Log::WriteLine("SyringeDebugger::HandleException: Finished retrieving proc addresses.");
 				bDLLsLoaded = true;
 
 				context.Eip = reinterpret_cast<DWORD>(pcEntryPoint);
@@ -145,7 +145,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		{
 			if(!bHooksCreated)
 			{
-				Log::SelWriteLine("SyringeDebugger::HandleException: Creating code hooks.");
+				Log::WriteLine("SyringeDebugger::HandleException: Creating code hooks.");
 
 				static const BYTE code_call[] =
 				{
@@ -234,7 +234,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 								//Dump
 								/*
-								Log::SelWriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
+								Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
 								char dump_str[0x200] = "\0";
 								char buffer[0x10] = "\0";
@@ -249,8 +249,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 									strcat(dump_str, buffer);
 								}
 
-								Log::SelWriteLine(dump_str);
-								Log::SelWriteLine();
+								Log::WriteLine(dump_str);
+								Log::WriteLine();
 
 								delete dump;*/
 
@@ -321,11 +321,11 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	}
 	else
 	{
-		Log::SelWriteLine("SyringeDebugger::HandleException: Exception (Code: 0x%08X at 0x%08X)!", exceptCode, exceptAddr);
+		Log::WriteLine("SyringeDebugger::HandleException: Exception (Code: 0x%08X at 0x%08X)!", exceptCode, exceptAddr);
 
 		if(!bAVLogged)
 		{
-			//Log::SelWriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
+			//Log::WriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
 			const auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
 			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
@@ -338,24 +338,24 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			case 8: access = "execute"; break;
 			}
 
-			Log::SelWriteLine("\tThe process tried to %s 0x%08X.",
+			Log::WriteLine("\tThe process tried to %s 0x%08X.",
 				access,
 				dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[1]);
 
 			context.ContextFlags = CONTEXT_FULL;
 			GetThreadContext(currentThread, &context);
 
-			Log::SelWriteLine();
-			Log::SelWriteLine("Registers:");
-			Log::SelWriteLine("\tEAX = 0x%08X\tECX = 0x%08X\tEDX = 0x%08X",
+			Log::WriteLine();
+			Log::WriteLine("Registers:");
+			Log::WriteLine("\tEAX = 0x%08X\tECX = 0x%08X\tEDX = 0x%08X",
 				context.Eax, context.Ecx, context.Edx);
-			Log::SelWriteLine("\tEBX = 0x%08X\tESP = 0x%08X\tEBP = 0x%08X",
+			Log::WriteLine("\tEBX = 0x%08X\tESP = 0x%08X\tEBP = 0x%08X",
 				context.Ebx, context.Esp, context.Ebp);
-			Log::SelWriteLine("\tESI = 0x%08X\tEDI = 0x%08X\tEIP = 0x%08X",
+			Log::WriteLine("\tESI = 0x%08X\tEDI = 0x%08X\tEIP = 0x%08X",
 				context.Esi, context.Edi, context.Eip);
-			Log::SelWriteLine();
+			Log::WriteLine();
 
-			Log::SelWriteLine("\tStack dump:");
+			Log::WriteLine("\tStack dump:");
 			auto esp = reinterpret_cast<DWORD*>(context.Esp);
 			for(int i = 0; i < 100; i++)
 			{
@@ -363,14 +363,14 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 				DWORD dw;
 				if(ReadMem(p, &dw, 4))
-					Log::SelWriteLine("\t0x%08X:\t0x%08X", p, dw);
+					Log::WriteLine("\t0x%08X:\t0x%08X", p, dw);
 				else
-					Log::SelWriteLine("\t0x%08X:\t(could not be read)", p);
+					Log::WriteLine("\t0x%08X:\t(could not be read)", p);
 			}
-			Log::SelWriteLine();
+			Log::WriteLine();
 
 #if 0
-			Log::SelWriteLine("Making crash dump:\n");
+			Log::WriteLine("Making crash dump:\n");
 			MINIDUMP_EXCEPTION_INFORMATION expParam;
 			expParam.ThreadId = dbgEvent.dwThreadId;
 			EXCEPTION_POINTERS ep;
@@ -397,7 +397,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, nullptr, nullptr);
 			CloseHandle(dumpFile); 
 				
-			Log::SelWriteLine("Crash dump generated.\n");
+			Log::WriteLine("Crash dump generated.\n");
 #endif
 
 			bAVLogged = true;
@@ -415,26 +415,26 @@ bool SyringeDebugger::Run(char* params)
 		return false;
 	}
 
-	Log::SelWriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), params);
+	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), params);
 
 	if(!DebugProcess(exe.c_str(), params)) {
 		return false;
 	}
 
-	Log::SelWriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
+	Log::WriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
 	pAlloc = AllocMem(nullptr, 0x1000);
 
-	Log::SelWriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", static_cast<void*>(pAlloc));
+	Log::WriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", static_cast<void*>(pAlloc));
 
 	if(!pAlloc) {
 		return false;
 	}
 
-	Log::SelWriteLine("SyringeDebugger::Run: Filling allocated space with zero...");
+	Log::WriteLine("SyringeDebugger::Run: Filling allocated space with zero...");
 	char zero[0x1000] = "\0";
 	PatchMem(pAlloc, zero, 0x1000);
 
-	Log::SelWriteLine("SyringeDebugger::Run: Setting addresses...");
+	Log::WriteLine("SyringeDebugger::Run: Setting addresses...");
 
 	//set addresses
 	pdData = pAlloc + 0x100;
@@ -449,7 +449,7 @@ bool SyringeDebugger::Run(char* params)
 	pdLibName = pdData + 4;
 	pdProcName = pdData + 4 + MaxNameLength;
 
-	Log::SelWriteLine("SyringeDebugger::Run: Writing DLL loader & caller code...");
+	Log::WriteLine("SyringeDebugger::Run: Writing DLL loader & caller code...");
 
 	//write DLL loader code
 	pcLoadLibraryEnd = pAlloc;
@@ -483,7 +483,7 @@ bool SyringeDebugger::Run(char* params)
 	PatchMem(pcLoadLibraryEnd + 0x1B, &pImGetProcAddress, 4);
 	PatchMem(pcLoadLibraryEnd + 0x24, &pdProcAddress, 4);
 
-	Log::SelWriteLine("SyringeDebugger::Run: pcLoadLibrary = 0x%08X", pcLoadLibrary);
+	Log::WriteLine("SyringeDebugger::Run: pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
 	//breakpoints for DLL loading and proc address retrieving
 	bDLLsLoaded = false;
@@ -502,7 +502,7 @@ bool SyringeDebugger::Run(char* params)
 
 	bAVLogged = false;
 
-	Log::SelWriteLine("SyringeDebugger::Run: Entering debug loop...");
+	Log::WriteLine("SyringeDebugger::Run: Entering debug loop...");
 
 	for(;;)
 	{
@@ -553,8 +553,8 @@ bool SyringeDebugger::Run(char* params)
 
 	CloseHandle(pInfo.hProcess);
 
-	Log::SelWriteLine("SyringeDebugger::Run: Done.");
-	Log::SelWriteLine();
+	Log::WriteLine("SyringeDebugger::Run: Done.");
+	Log::WriteLine();
 
 	return true;
 }
@@ -578,7 +578,7 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 
 	exe = std::move(filename);
 
-	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
+	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
 	PortableExecutable pe(exe);
 	if(pe.IsValid())
@@ -608,11 +608,11 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 		}
 
 		if(!pImGetProcAddress || !pImLoadLibrary) {
-			Log::SelWriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
+			Log::WriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
 			return false;
 		}
 	} else {
-		Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Failed to open the executable!");
+		Log::WriteLine("SyringeDebugger::RetrieveInfo: Failed to open the executable!");
 		return false;
 	}
 
@@ -631,17 +631,17 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 	dwExeCRC = crc.value();
 	is.close();
 
-	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
-	Log::SelWriteLine("\texe = %s", exe.c_str());
-	Log::SelWriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
-	Log::SelWriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
-	Log::SelWriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
-	Log::SelWriteLine("\tdwExeSize = 0x%08X", dwExeSize);
-	Log::SelWriteLine("\tdwExeCRC = 0x%08X", dwExeCRC);
-	Log::SelWriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
-	Log::SelWriteLine();
+	Log::WriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
+	Log::WriteLine("\texe = %s", exe.c_str());
+	Log::WriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
+	Log::WriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
+	Log::WriteLine("\tpcEntryPoint = 0x%08X", pcEntryPoint);
+	Log::WriteLine("\tdwExeSize = 0x%08X", dwExeSize);
+	Log::WriteLine("\tdwExeCRC = 0x%08X", dwExeCRC);
+	Log::WriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
+	Log::WriteLine();
 
-	Log::SelWriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
+	Log::WriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
 
 	bControlLoaded = true;
 	return true;
@@ -655,7 +655,7 @@ void SyringeDebugger::FindDLLs()
 		for(auto file = FindFile("*.dll"); file; ++file) {
 			std::string fn(file->cFileName);
 
-			//Log::SelWriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
+			//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
 			PortableExecutable DLL(fn);
 			if(DLL.IsValid()) {
@@ -669,7 +669,7 @@ void SyringeDebugger::FindDLLs()
 				}
 
 				if(canLoad) {
-					Log::SelWriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn.c_str());
+					Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn.c_str());
 
 					if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
 						// canLoad has been updated already
@@ -688,11 +688,11 @@ void SyringeDebugger::FindDLLs()
 						h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
 					}
 				} else if(!buffer.hooks.empty()) {
-					Log::SelWriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
+					Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
 				}
 
 			//} else {
-			//	Log::SelWriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
+			//	Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
 			}
 		}
 
@@ -704,8 +704,8 @@ void SyringeDebugger::FindDLLs()
 			}
 		}
 
-		Log::SelWriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
-		Log::SelWriteLine();
+		Log::WriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
+		Log::WriteLine();
 	}
 }
 
@@ -780,7 +780,7 @@ bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMA
 				// else - msvc linker inserts arbitrary padding between variables that come from different .cpps
 			}
 		} else {
-			Log::SelWriteLine(__FUNCTION__ ": Bytes read failed");
+			Log::WriteLine(__FUNCTION__ ": Bytes read failed");
 			return false;
 		}
 	}
@@ -798,7 +798,7 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 	{
 		if(auto hProc = GetProcAddress(hLib, "SyringeHandshake"))
 		{
-			Log::SelWriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
+			Log::WriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
 			char buffer[0x101] = {0}; // one more than we tell the dll
 
 			SyringeHandshakeInfo shInfo;
@@ -818,19 +818,19 @@ bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bo
 			if(SUCCEEDED(res))
 			{
 				buffer[0x100] = 0;
-				Log::SelWriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer, res);
+				Log::WriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer, res);
 				outOk = (res == S_OK);
 			}
 			else
 			{
 				// don't use any properties of shInfo.
-				Log::SelWriteLine("SyringeDebugger::Handshake: Failed (%X)", res);
+				Log::WriteLine("SyringeDebugger::Handshake: Failed (%X)", res);
 				outOk = false;
 			}
 
 			return true;
 		} else {
-			//Log::SelWriteLine("SyringeDebugger::Handshake: Not available.");
+			//Log::WriteLine("SyringeDebugger::Handshake: Not available.");
 		}
 	}
 

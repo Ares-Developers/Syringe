@@ -1,112 +1,57 @@
 #include "Log.h"
+
 #include <share.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <time.h>
 
-Log* Log::sel = nullptr;
+FileHandle Log::File;
 
-void Log::Open()
+void Log::Open(char const* const pFilename) noexcept
 {
-	Close();
-	if(!this->Filename.empty()) {
-		this->File = FileHandle(_fsopen(this->Filename.c_str(), "w", _SH_DENYWR));
+	if(pFilename && *pFilename)
+	{
+		File = FileHandle(_fsopen(pFilename, "w", _SH_DENYWR));
 	}
 }
 
-void Log::Close()
+void Log::WriteTimestamp() noexcept
 {
-	this->File.clear();
-}
-
-void Log::WriteTimestamp()
-{
-	if(this->File) {
+	if(File)
+	{
 		time_t raw;
 		time(&raw);
 
 		tm t;
 		localtime_s(&t, &raw);
 
-		fprintf(this->File, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
-		fflush(this->File);
-		fseek(this->File, 0, SEEK_END);
+		fprintf(File, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
+		fflush(File);
+		fseek(File, 0, SEEK_END);
 	}
 }
 
-void Log::WriteLine()
+void Log::WriteLine() noexcept
 {
-	if(this->File)
+	if(File)
 	{
-		fputs("\n", this->File);
-		fflush(this->File);
-		fseek(this->File, 0, SEEK_END);
+		fputs("\n", File);
+		fflush(File);
+		fseek(File, 0, SEEK_END);
 	}
 }
 
-void Log::WriteLine(const char* Format, ...)
+void Log::WriteLine(const char* const pFormat, ...) noexcept
 {
-	if(this->File) {
-		WriteTimestamp();
-
+	if(File)
+	{
 		va_list args;
-		va_start(args, Format);
+		va_start(args, pFormat);
 
-		if(this->File) {
-			vfprintf(this->File, Format, args);
-		}
+		WriteTimestamp();
+		vfprintf(File, pFormat, args);
+		WriteLine();
 
 		va_end(args);
-
-		WriteLine();
-	}
-}
-
-void Log::WriteLine(const char* Format, va_list Arguments)
-{
-	if(this->File) {
-		WriteTimestamp();
-		vfprintf(this->File, Format, Arguments);
-		WriteLine();
-	}
-}
-
-void Log::Select(Log* log)
-{
-	sel = log;
-}
-
-void Log::Deselect()
-{
-	sel = nullptr;
-}
-
-void Log::SelWriteLine()
-{
-	if(sel) {
-		sel->WriteLine();
-	}
-}
-
-void Log::SelWriteLine(const char* Format, ...)
-{
-	if(sel) {
-		va_list args;
-		va_start(args, Format);
-
-		sel->WriteLine(Format, args);
-
-		va_end(args);
-	}
-}
-
-void Log::SelOpen()
-{
-	if(sel) {
-		sel->Open();
-	}
-}
-
-void Log::SelClose()
-{
-	if(sel) {
-		sel->Close();
 	}
 }
