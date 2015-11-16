@@ -116,11 +116,9 @@ DWORD PortableExecutable::GetImageBase() const {
 bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {
 	if(!Filename.empty()) {
 		assert(Handle);
-		auto success = false;
 		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
-			success = (fread(Dest, Size, 1, Handle) == 1);
+			return (fread(Dest, Size, 1, Handle) == 1);
 		}
-		return success;
 	}
 	return false;
 }
@@ -145,7 +143,7 @@ bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) co
 
 const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findName) const {
 	const size_t slen = strlen(findName);
-	assert(slen <= 8);
+	assert(slen <= IMAGE_SIZEOF_SHORT_NAME);
 	auto found = std::find_if(vecPESections.begin(), vecPESections.end(), [slen, findName](auto const& section) {
 		return !memcmp(findName, section.Name, slen);
 	});
