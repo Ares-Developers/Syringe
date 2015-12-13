@@ -10,10 +10,9 @@ DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without 
 {
 	for(const auto& uSection : vecPESections)
 	{
-		if(dwAddress >= uSection.VirtualAddress &&
-			dwAddress < uSection.VirtualAddress + uSection.SizeOfRawData)
-		{
-			DWORD dwDifference = dwAddress - uSection.VirtualAddress;
+		DWORD dwDifference = dwAddress - uSection.VirtualAddress;
+
+		if(dwDifference < uSection.SizeOfRawData) {
 			return uSection.PointerToRawData + dwDifference;
 		}
 	}
