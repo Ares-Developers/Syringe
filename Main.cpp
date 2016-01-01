@@ -4,7 +4,7 @@
 #include <string>
 
 int Run(char* const lpCmdLine) {
-	constexpr auto const VersionString = "Syringe 0.7.0.5";
+	constexpr auto const VersionString = "Syringe 0.7.0.6";
 
 	Log::Open("syringe.log");
 
@@ -16,7 +16,7 @@ int Run(char* const lpCmdLine) {
 	if(lpCmdLine && *lpCmdLine == '\"')
 	{
 		auto const pFilenameBegin = lpCmdLine + 1;
-		
+
 		if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
 		{
 			std::string file(pFilenameBegin, pFilenameEnd);
