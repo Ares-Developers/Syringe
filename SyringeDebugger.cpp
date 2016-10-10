@@ -164,6 +164,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				static const BYTE jmp_back[] = {0xE9, INIT, INIT, INIT, INIT, };
 				static const BYTE jmp[] = {0xE9, INIT, INIT, INIT, INIT, };
 
+				std::vector<BYTE> over;
+
 				for(auto& it : bpMap)
 				{
 					if(it.first && it.first != pcEntryPoint && it.second.hooks.size())
@@ -218,13 +220,13 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//Write overridden bytes
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
-								if(first->num_overridden > 0)
+								if(auto const overridden = first->num_overridden)
 								{
-									std::vector<BYTE> over(first->num_overridden);
-									ReadMem(it.first, over.data(), first->num_overridden);
-									PatchMem(p_code, over.data(), first->num_overridden);
+									over.resize(overridden);
+									ReadMem(it.first, over.data(), overridden);
+									PatchMem(p_code, over.data(), overridden);
 
-									p_code += first->num_overridden;
+									p_code += overridden;
 								}
 
 								//Write the jump back
