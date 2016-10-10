@@ -13,11 +13,6 @@ CRC32::CRC32() noexcept
 	reset();
 }
 
-void CRC32::reset() noexcept
-{
-	_value = 0xFFFFFFFFU;
-}
-
 void CRC32::initialize() noexcept
 {
 	for(unsigned int i = 0; i < 256; ++i)
@@ -51,10 +46,5 @@ unsigned int CRC32::compute(void* buffer, long long length) noexcept
 		_value = (_value >> 8) ^ table[index];
 	}
 
-	return ~_value;
-}
-
-unsigned int CRC32::value() const noexcept
-{
 	return ~_value;
 }
