@@ -30,12 +30,13 @@ constexpr auto SequenceToArray(std::integer_sequence<T, Values...>) {
 constexpr auto const crc_table = SequenceToArray(
 	IndexesToPolynomial(std::make_index_sequence<256>()));
 
-unsigned int CRC32::compute(void* buffer, long long length) noexcept
+unsigned int CRC32::compute(
+	void const* const buffer, long long const length) noexcept
 {
-	for(long long i = 0; i < length; ++i)
+	for(auto i = 0ll; i < length; ++i)
 	{
-		unsigned char byte = static_cast<unsigned char*>(buffer)[i];
-		unsigned char index = (_value & 0xFF) ^ byte;
+		auto const byte = static_cast<unsigned char const*>(buffer)[i];
+		auto const index = static_cast<unsigned char>((_value & 0xFF) ^ byte);
 		_value = (_value >> 8) ^ crc_table[index];
 	}
 

@@ -3,7 +3,7 @@
 class CRC32
 {
 public:
-	unsigned int compute(void* buffer, long long length) noexcept;
+	unsigned int compute(void const* buffer, long long length) noexcept;
 
 	unsigned int value() const noexcept {
 		return ~_value;
