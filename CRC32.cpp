@@ -33,10 +33,11 @@ constexpr auto const crc_table = SequenceToArray(
 unsigned int CRC32::compute(
 	void const* const buffer, long long const length) noexcept
 {
-	for(auto i = 0ll; i < length; ++i)
+	auto const data = static_cast<unsigned char const*>(buffer);
+
+	for(auto i = data; i < &data[length]; ++i)
 	{
-		auto const byte = static_cast<unsigned char const*>(buffer)[i];
-		auto const index = static_cast<unsigned char>((_value & 0xFF) ^ byte);
+		auto const index = static_cast<unsigned char>((_value & 0xFF) ^ *i);
 		_value = (_value >> 8) ^ crc_table[index];
 	}
 
