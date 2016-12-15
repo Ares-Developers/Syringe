@@ -531,6 +531,7 @@ bool SyringeDebugger::Run(char* params)
 			break;
 
 		case EXIT_THREAD_DEBUG_EVENT:
+			threadInfoMap[dbgEvent.dwThreadId].Thread.release();
 			threadInfoMap.erase(dbgEvent.dwThreadId);
 			break;
 
