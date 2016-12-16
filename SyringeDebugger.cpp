@@ -5,6 +5,7 @@
 #include "CRC32.h"
 
 #include <fstream>
+#include <memory>
 #include <DbgHelp.h>
 
 using namespace std;
@@ -794,33 +795,34 @@ bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMA
 // function, we initiate a handshake. if it fails, or the dll opts out,
 // the hooks aren't included. if the function is not exported, we have to
 // rely on other methods.
-bool SyringeDebugger::Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk)
+bool SyringeDebugger::Handshake(
+	const char* const lib, int const hooks, unsigned int const crc, bool& outOk)
 {
-	if(auto hLib = ModuleHandle(LoadLibrary(lib)))
+	if(auto const hLib = ModuleHandle(LoadLibrary(lib)))
 	{
-		if(auto hProc = GetProcAddress(hLib, "SyringeHandshake"))
+		if(auto const hProc = GetProcAddress(hLib, "SyringeHandshake"))
 		{
 			Log::WriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
-			char buffer[0x101] = {0}; // one more than we tell the dll
+			std::vector<char> buffer(0x101); // one more than we tell the dll
 
-			SyringeHandshakeInfo shInfo;
-			memset(&shInfo, 0, sizeof(shInfo));
-			shInfo.cbSize = sizeof(shInfo);
-			shInfo.num_hooks = hooks;
-			shInfo.checksum = crc;
-			shInfo.exeFilesize = dwExeSize;
-			shInfo.exeCRC = dwExeCRC;
-			shInfo.exeTimestamp = dwTimeStamp;
-			shInfo.Message = buffer;
-			shInfo.cchMessage = std::size(buffer) - 1;
+			auto const shInfo = std::make_unique<SyringeHandshakeInfo>();
+			memset(shInfo.get(), 0, sizeof(SyringeHandshakeInfo));
+			shInfo->cbSize = sizeof(SyringeHandshakeInfo);
+			shInfo->num_hooks = hooks;
+			shInfo->checksum = crc;
+			shInfo->exeFilesize = dwExeSize;
+			shInfo->exeCRC = dwExeCRC;
+			shInfo->exeTimestamp = dwTimeStamp;
+			shInfo->Message = buffer.data();
+			shInfo->cchMessage = static_cast<int>(buffer.size()) - 1;
 
-			auto func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
-			auto res = func(&shInfo);
+			auto const func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
+			auto const res = func(shInfo.get());
 
 			if(SUCCEEDED(res))
 			{
-				buffer[0x100] = 0;
-				Log::WriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer, res);
+				buffer.back() = 0;
+				Log::WriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer.data(), res);
 				outOk = (res == S_OK);
 			}
 			else
