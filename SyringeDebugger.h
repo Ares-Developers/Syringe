@@ -18,7 +18,6 @@ class SyringeDebugger
 
 public:
 	SyringeDebugger() :
-		bAttached(false),
 		bEntryBP(true),
 		pcEntryPoint(nullptr),
 		pcLoadLibrary(nullptr),
@@ -64,7 +63,6 @@ private:
 	PROCESS_INFORMATION pInfo;
 
 	//Flags
-	bool bAttached;
 	bool bEntryBP;
 	void* pEntryBP;
 

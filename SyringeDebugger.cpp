@@ -24,7 +24,6 @@ bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
 		nullptr, nullptr, &startupInfo, &pInfo) != FALSE);
 
-	bAttached = retVal;
 	return retVal;
 }
 
