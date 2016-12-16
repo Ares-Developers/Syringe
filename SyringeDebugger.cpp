@@ -10,21 +10,19 @@
 
 using namespace std;
 
-bool SyringeDebugger::DebugProcess(const char* exeFile, char* params)
+bool SyringeDebugger::DebugProcess(
+	char const* const exeFile, char* const params)
 {
 	STARTUPINFO startupInfo;
-
 	memset(&startupInfo, 0, sizeof(startupInfo));
 	startupInfo.cb = sizeof(startupInfo);
 
 	SetEnvironmentVariable("_NO_DEBUG_HEAP", "1");
 
-	bool retVal = (CreateProcess(
+	return (CreateProcess(
 		exeFile, params, nullptr, nullptr, false,
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
 		nullptr, nullptr, &startupInfo, &pInfo) != FALSE);
-
-	return retVal;
 }
 
 bool SyringeDebugger::PatchMem(void* address, const void* buffer, DWORD size)
