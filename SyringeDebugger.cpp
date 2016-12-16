@@ -620,19 +620,18 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 	}
 
 	// read meta information: size and checksum
-	ifstream is;
-	is.open(exe, ifstream::binary);
-	is.seekg(0, ifstream::end);
-	dwExeSize = static_cast<DWORD>(is.tellg());
-	is.seekg(0, ifstream::beg);
+	if(ifstream is{ exe, ifstream::binary }) {
+		is.seekg(0, ifstream::end);
+		dwExeSize = static_cast<DWORD>(is.tellg());
+		is.seekg(0, ifstream::beg);
 
-	CRC32 crc;
-	char buffer[0x1000];
-	while(std::streamsize read = is.read(buffer, sizeof(buffer)).gcount()) {
-		crc.compute(buffer, read);
+		CRC32 crc;
+		char buffer[0x1000];
+		while(auto const read = is.read(buffer, std::size(buffer)).gcount()) {
+			crc.compute(buffer, read);
+		}
+		dwExeCRC = crc.value();
 	}
-	dwExeCRC = crc.value();
-	is.close();
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
 	Log::WriteLine("\texe = %s", exe.c_str());
