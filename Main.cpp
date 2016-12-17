@@ -43,7 +43,7 @@ int Run(char* const lpCmdLine) {
 			else
 			{
 				char msg[0x280];
-				sprintf_s(msg, "Fatal Error:\r\nCould not load executable file: \"%s\"", file.c_str());
+				sprintf_s(msg, "Could not load executable file.\n\n\"%s\"", file.c_str());
 
 				MessageBoxA(nullptr, msg, VersionString, MB_OK | MB_ICONERROR);
 
@@ -53,7 +53,7 @@ int Run(char* const lpCmdLine) {
 		else
 		{
 			char msg[0x280];
-			sprintf_s(msg, "Fatal Error:\r\nCould not evaluate command line arguments: \"%s\"", lpCmdLine);
+			sprintf_s(msg, "Could not evaluate command line arguments.\n\n\"%s\"", lpCmdLine);
 
 			MessageBoxA(nullptr, msg, VersionString, MB_OK | MB_ICONERROR);
 
