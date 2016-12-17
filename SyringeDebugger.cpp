@@ -356,11 +356,9 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			Log::WriteLine();
 
 			Log::WriteLine("\tStack dump:");
-			auto esp = reinterpret_cast<DWORD*>(context.Esp);
-			for(int i = 0; i < 100; i++)
+			auto const esp = reinterpret_cast<DWORD*>(context.Esp);
+			for(auto p = esp; p < &esp[0x100]; ++p)
 			{
-				DWORD* p = esp + i;
-
 				DWORD dw;
 				if(ReadMem(p, &dw, 4))
 					Log::WriteLine("\t0x%08X:\t0x%08X", p, dw);
