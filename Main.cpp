@@ -30,14 +30,15 @@ int Run(char* const lpCmdLine) {
 				Log::WriteLine();
 				Debugger.FindDLLs();
 
-				auto const pArgs = strpbrk(pFilenameEnd + 1, " ");
+				auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
 				Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
 				Log::WriteLine();
-				Debugger.Run(pArgs);
 
-				Log::WriteLine("WinMain: SyringeDebugger::Run finished.", pArgs);
-				Log::WriteLine("WinMain: Exiting on success.");
-				return 0;
+				if(Debugger.Run(pArgs)) {
+					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
+					Log::WriteLine("WinMain: Exiting on success.");
+					return 0;
+				}
 			}
 			else
 			{
