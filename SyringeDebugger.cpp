@@ -504,6 +504,8 @@ bool SyringeDebugger::Run(char* params)
 
 	Log::WriteLine("SyringeDebugger::Run: Entering debug loop...");
 
+	auto exit_code = static_cast<DWORD>(-1);
+
 	for(;;)
 	{
 		WaitForDebugEvent(&dbgEvent, INFINITE);
@@ -546,15 +548,19 @@ bool SyringeDebugger::Run(char* params)
 			break;
 		}
 
-		if(dbgEvent.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+		if(dbgEvent.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) {
+			exit_code = dbgEvent.u.ExitProcess.dwExitCode;
 			break;
+		} else if(dbgEvent.dwDebugEventCode == RIP_EVENT) {
+			break;
+		}
 
 		ContinueDebugEvent(dbgEvent.dwProcessId, dbgEvent.dwThreadId, continueStatus);
 	}
 
 	CloseHandle(pInfo.hProcess);
 
-	Log::WriteLine("SyringeDebugger::Run: Done.");
+	Log::WriteLine("SyringeDebugger::Run: Done with exit code %u.", exit_code);
 	Log::WriteLine();
 
 	return true;
