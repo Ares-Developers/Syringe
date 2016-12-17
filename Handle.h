@@ -95,6 +95,11 @@ struct Handle {
 		Handle(std::move(*this));
 	}
 
+	T* set() noexcept {
+		this->clear();
+		return &this->Value;
+	}
+
 private:
 	T Value{ Default };
 };
