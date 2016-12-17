@@ -3,6 +3,35 @@
 
 #include <string>
 
+inline auto GetLastErrorMessage(DWORD const error = GetLastError())
+{
+	struct lasterror {
+		DWORD error;
+		std::string message;
+
+		explicit operator bool() const noexcept {
+			return this->error != ERROR_SUCCESS;
+		}
+	} ret{ error };
+
+	LocalAllocHandle handle;
+
+	auto count = FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		reinterpret_cast<LPTSTR>(handle.set()), 0u, nullptr);
+
+	auto const message = static_cast<LPTSTR>(handle.get());
+	while(count && isspace(static_cast<unsigned char>(message[count - 1]))) {
+		--count;
+	}
+
+	ret.message.assign(message, count);
+
+	return ret;
+}
+
 int Run(char* const lpCmdLine) {
 	constexpr auto const VersionString = "Syringe 0.7.0.6";
 
@@ -38,6 +67,16 @@ int Run(char* const lpCmdLine) {
 					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
 					Log::WriteLine("WinMain: Exiting on success.");
 					return 0;
+				}
+
+				if(auto const lasterror = GetLastErrorMessage()) {
+					Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
+
+					auto const msg = "Could not run executable.\n\n\"" + file + "\"\n\n" + lasterror.message;
+					MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
+
+					Log::WriteLine("WinMain: Exiting on failure.");
+					return lasterror.error;
 				}
 			}
 			else
