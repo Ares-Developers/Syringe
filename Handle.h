@@ -42,6 +42,14 @@ struct FindHandleDeleter {
 	}
 };
 
+struct LocalAllocHandleDeleter {
+	using pointer = HLOCAL;
+
+	void operator () (pointer handle) const noexcept {
+		LocalFree(handle);
+	}
+};
+
 // owns a resource. not copyable, but movable.
 template <typename T, typename Deleter, T Default = T()>
 struct Handle {
@@ -108,6 +116,7 @@ using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
 using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
 using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
 using FindHandle = Handle<HANDLE, FindHandleDeleter, INVALID_HANDLE_VALUE>;
+using LocalAllocHandle = Handle<HLOCAL, LocalAllocHandleDeleter, nullptr>;
 
 struct VirtualMemoryHandle {
 	VirtualMemoryHandle() noexcept = default;
