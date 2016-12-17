@@ -68,25 +68,16 @@ int Run(char* const lpCmdLine) {
 					Log::WriteLine("WinMain: Exiting on success.");
 					return 0;
 				}
-
-				if(auto const lasterror = GetLastErrorMessage()) {
-					Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
-
-					auto const msg = "Could not run executable.\n\n\"" + file + "\"\n\n" + lasterror.message;
-					MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
-
-					Log::WriteLine("WinMain: Exiting on failure.");
-					return lasterror.error;
-				}
 			}
-			else
-			{
-				char msg[0x280];
-				sprintf_s(msg, "Could not load executable file.\n\n\"%s\"", file.c_str());
 
-				MessageBoxA(nullptr, msg, VersionString, MB_OK | MB_ICONERROR);
+			if(auto const lasterror = GetLastErrorMessage()) {
+				Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
 
-				Log::WriteLine("WinMain: ERROR: Could not load executable file, exiting...");
+				auto const msg = "Could not run executable.\n\n\"" + file + "\"\n\n" + lasterror.message;
+				MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
+
+				Log::WriteLine("WinMain: Exiting on failure.");
+				return lasterror.error;
 			}
 		}
 		else
