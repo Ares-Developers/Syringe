@@ -49,12 +49,15 @@ int Run(char* const lpCmdLine) {
 		if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
 		{
 			std::string file(pFilenameBegin, pFilenameEnd);
+			auto failure = "Could not load executable.";
 			
 			Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
 			Log::WriteLine();
 			SyringeDebugger Debugger;
 			if(Debugger.RetrieveInfo(file))
 			{
+				failure = "Could not run executable.";
+
 				Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
 				Log::WriteLine();
 				Debugger.FindDLLs();
@@ -73,7 +76,7 @@ int Run(char* const lpCmdLine) {
 			if(auto const lasterror = GetLastErrorMessage()) {
 				Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
 
-				auto const msg = "Could not run executable.\n\n\"" + file + "\"\n\n" + lasterror.message;
+				auto const msg = std::string(failure) + "\n\n\"" + file + "\"\n\n" + lasterror.message;
 				MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
 				Log::WriteLine("WinMain: Exiting on failure.");
@@ -82,12 +85,10 @@ int Run(char* const lpCmdLine) {
 		}
 		else
 		{
-			char msg[0x280];
-			sprintf_s(msg, "Could not evaluate command line arguments.\n\n\"%s\"", lpCmdLine);
+			auto const msg = "Could not evaluate command line arguments.\n\n\"" + std::string(lpCmdLine) + "\"";
+			MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
-			MessageBoxA(nullptr, msg, VersionString, MB_OK | MB_ICONERROR);
-
-			Log::WriteLine("WinMain: ERROR: Command line arguments could not be evaluated, exiting...");
+			Log::WriteLine("WinMain: Command line arguments could not be evaluated, exiting...");
 		}
 	}
 	else
@@ -95,7 +96,7 @@ int Run(char* const lpCmdLine) {
 		MessageBoxA(nullptr, "Syringe cannot be run just like that.\n\nUsage:\nSyringe.exe \"<exe name>\" <arguments>",
 			VersionString, MB_OK | MB_ICONINFORMATION);
 
-		Log::WriteLine("WinMain: ERROR: No command line arguments given, exiting...");
+		Log::WriteLine("WinMain: No command line arguments given, exiting...");
 	}
 
 	Log::WriteLine("WinMain: Exiting on failure.");
