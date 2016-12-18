@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <commctrl.h>
+
 inline auto GetLastErrorMessage(DWORD const error = GetLastError())
 {
 	struct lasterror {
@@ -34,6 +36,8 @@ inline auto GetLastErrorMessage(DWORD const error = GetLastError())
 
 int Run(char* const lpCmdLine) {
 	constexpr auto const VersionString = "Syringe 0.7.0.6";
+
+	InitCommonControls();
 
 	Log::Open("syringe.log");
 
