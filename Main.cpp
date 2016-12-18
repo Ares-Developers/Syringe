@@ -69,38 +69,32 @@ int Run(char* const lpCmdLine) {
 				if(Debugger.Run(pArgs)) {
 					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
 					Log::WriteLine("WinMain: Exiting on success.");
-					return 0;
+					return ERROR_SUCCESS;
 				}
 			}
 
+			auto exit_code = ERROR_ERRORS_ENCOUNTERED;
 			if(auto const lasterror = GetLastErrorMessage()) {
 				Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
 
 				auto const msg = std::string(failure) + "\n\n\"" + file + "\"\n\n" + lasterror.message;
 				MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
-				Log::WriteLine("WinMain: Exiting on failure.");
-				return lasterror.error;
+				exit_code = lasterror.error;
 			}
-		}
-		else
-		{
-			auto const msg = "Could not evaluate command line arguments.\n\n\"" + std::string(lpCmdLine) + "\"";
-			MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
-			Log::WriteLine("WinMain: Command line arguments could not be evaluated, exiting...");
+			Log::WriteLine("WinMain: Exiting on failure.");
+			return exit_code;
 		}
 	}
-	else
-	{
-		MessageBoxA(nullptr, "Syringe cannot be run just like that.\n\nUsage:\nSyringe.exe \"<exe name>\" <arguments>",
-			VersionString, MB_OK | MB_ICONINFORMATION);
 
-		Log::WriteLine("WinMain: No command line arguments given, exiting...");
-	}
+	// if this code is reached, the arguments couldn't be parsed
+	MessageBoxA(nullptr, "Syringe cannot be run just like that.\n\nUsage:\nSyringe.exe \"<exe name>\" <arguments>",
+		VersionString, MB_OK | MB_ICONINFORMATION);
 
+	Log::WriteLine("WinMain: No or invalid command line arguments given, exiting...");
 	Log::WriteLine("WinMain: Exiting on failure.");
-	return 0;
+	return ERROR_INVALID_PARAMETER;
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
