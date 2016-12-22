@@ -30,8 +30,8 @@ public:
 	{}
 
 	//Debugger
-	bool DebugProcess(char* params);
-	bool Run(char* params);
+	bool DebugProcess(char const* arguments);
+	bool Run(char const* arguments);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
 	//Breakpoints

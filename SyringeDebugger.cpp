@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool SyringeDebugger::DebugProcess(char* const arguments)
+bool SyringeDebugger::DebugProcess(char const* const arguments)
 {
 	STARTUPINFO startupInfo;
 	memset(&startupInfo, 0, sizeof(startupInfo));
@@ -408,15 +408,15 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	return DBG_CONTINUE;
 }
 
-bool SyringeDebugger::Run(char* params)
+bool SyringeDebugger::Run(char const* const arguments)
 {
 	if(!bControlLoaded || exe.empty()) {
 		return false;
 	}
 
-	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), params);
+	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), arguments);
 
-	if(!DebugProcess(params)) {
+	if(!DebugProcess(arguments)) {
 		return false;
 	}
 
