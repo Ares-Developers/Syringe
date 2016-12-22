@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool SyringeDebugger::DebugProcess(char* const params)
+bool SyringeDebugger::DebugProcess(char* const arguments)
 {
 	STARTUPINFO startupInfo;
 	memset(&startupInfo, 0, sizeof(startupInfo));
@@ -18,8 +18,10 @@ bool SyringeDebugger::DebugProcess(char* const params)
 
 	SetEnvironmentVariable("_NO_DEBUG_HEAP", "1");
 
+	auto command_line = '"' + exe + "\" " + arguments;
+
 	return (CreateProcess(
-		exe.c_str(), params, nullptr, nullptr, false,
+		exe.c_str(), command_line.data(), nullptr, nullptr, false,
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
 		nullptr, nullptr, &startupInfo, &pInfo) != FALSE);
 }
