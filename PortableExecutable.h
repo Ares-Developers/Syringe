@@ -54,7 +54,12 @@ public:
 			Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
 		}
 
-		this->ReadFile();
+		if(!this->ReadFile()) {
+			Handle.clear();
+			if(!GetLastError()) {
+				SetLastError(ERROR_BAD_EXE_FORMAT);
+			}
+		}
 	};
 
 	const char * GetFilename() const { return Filename.c_str(); }

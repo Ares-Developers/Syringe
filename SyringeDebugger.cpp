@@ -613,6 +613,10 @@ bool SyringeDebugger::RetrieveInfo(std::string filename)
 		}
 
 		if(!pImGetProcAddress || !pImLoadLibrary) {
+			if(!GetLastError()) {
+				SetLastError(ERROR_PROC_NOT_FOUND);
+			}
+
 			Log::WriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
 			return false;
 		}
