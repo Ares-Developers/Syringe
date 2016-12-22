@@ -30,7 +30,7 @@ public:
 	{}
 
 	//Debugger
-	bool DebugProcess(const char* exeFile, char* params);
+	bool DebugProcess(char* params);
 	bool Run(char* params);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
