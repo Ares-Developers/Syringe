@@ -741,26 +741,27 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 	return false;
 }
 
-bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const {
-	const auto hostSz = sizeof(hostdecl);
-	auto hostCount = hosts.SizeOfRawData / hostSz;
-	auto hostsPtr = hosts.PointerToRawData;
+bool SyringeDebugger::CanHostDLL(
+	PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hosts) const
+{
+	constexpr auto const Size = sizeof(hostdecl);
+	auto const base = DLL.GetImageBase();
+
+	auto const begin = hosts.PointerToRawData;
+	auto const end = begin + hosts.SizeOfRawData;
+
 	std::string hostName;
-	for(decltype(hostCount) ix = 0; ix < hostCount; ++ix) {
+	for(auto ptr = begin; ptr < end; ptr += Size) {
 		hostdecl h;
-		if(DLL.ReadBytes(hostsPtr, hostSz, reinterpret_cast<void *>(&h))) {
-			hostsPtr += hostSz;
+		if(DLL.ReadBytes(ptr, Size, &h)) {
 			if(h.hostNamePtr) {
-				auto rawHostNamePtr = DLL.VirtualToRaw(h.hostNamePtr - DLL.GetImageBase());
-				if(DLL.ReadCString(rawHostNamePtr, hostName)) {
+				auto const rawNamePtr = DLL.VirtualToRaw(h.hostNamePtr - base);
+				if(DLL.ReadCString(rawNamePtr, hostName)) {
 					hostName += ".exe";
 					if(!_strcmpi(hostName.c_str(), exe.c_str())) {
 						return true;
 					}
 				}
-
-			} else {
-				break;
 			}
 		} else {
 			break;
@@ -769,23 +770,28 @@ bool SyringeDebugger::CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECT
 	return false;
 }
 
-bool SyringeDebugger::ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer) {
-	const auto Sz = sizeof(hookdecl);
-	auto Count = hooks.SizeOfRawData / Sz;
-	auto Ptr = hooks.PointerToRawData;
+bool SyringeDebugger::ParseHooksSection(
+	PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hooks,
+	HookBuffer& buffer)
+{
+	constexpr auto const Size = sizeof(hookdecl);
+	auto const base = DLL.GetImageBase();
+
+	auto const begin = hooks.PointerToRawData;
+	auto const end = begin + hooks.SizeOfRawData;
 
 	std::string hookName;
-	for(decltype(Count) ix = 0; ix < Count; ++ix) {
+	for(auto ptr = begin; ptr < end; ptr += Size) {
 		hookdecl h;
-		if(DLL.ReadBytes(Ptr, Sz, reinterpret_cast<void *>(&h))) {
-			Ptr += Sz;
+		if(DLL.ReadBytes(ptr, Size, &h)) {
+			// msvc linker inserts arbitrary padding between variables that come
+			// from different translation units
 			if(h.hookNamePtr) {
-				auto rawHookNamePtr = DLL.VirtualToRaw(h.hookNamePtr - DLL.GetImageBase());
-				if(DLL.ReadCString(rawHookNamePtr, hookName)) {
-					auto eip = reinterpret_cast<void *>(h.hookAddr);
+				auto const rawNamePtr = DLL.VirtualToRaw(h.hookNamePtr - base);
+				if(DLL.ReadCString(rawNamePtr, hookName)) {
+					auto const eip = reinterpret_cast<void*>(h.hookAddr);
 					buffer.add(eip, DLL.GetFilename(), hookName.c_str(), h.hookSize);
 				}
-				// else - msvc linker inserts arbitrary padding between variables that come from different .cpps
 			}
 		} else {
 			Log::WriteLine(__FUNCTION__ ": Bytes read failed");
