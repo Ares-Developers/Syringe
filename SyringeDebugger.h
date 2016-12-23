@@ -23,17 +23,7 @@ class SyringeDebugger
 	static const BYTE NOP = 0x90;
 
 public:
-	SyringeDebugger() :
-		bEntryBP(true),
-		pcEntryPoint(nullptr),
-		pcLoadLibrary(nullptr),
-		pcLoadLibraryEnd(nullptr),
-		pImLoadLibrary(nullptr),
-		pImGetProcAddress(nullptr),
-		bControlLoaded(false),
-		bDLLsLoaded(false),
-		pLastBP(nullptr)
-	{}
+	SyringeDebugger() = default;
 
 	//Debugger
 	bool DebugProcess(std::string_view arguments);
@@ -69,8 +59,7 @@ private:
 	PROCESS_INFORMATION pInfo;
 
 	//Flags
-	bool bEntryBP;
-	void* pEntryBP;
+	bool bEntryBP{ true };
 
 	//Breakpoints
 	struct Hook
@@ -95,37 +84,37 @@ private:
 
 	//Syringe
 	std::string exe;
-	void* pcEntryPoint;
-	void* pImLoadLibrary;
-	void* pImGetProcAddress;
+	void* pcEntryPoint{ nullptr };
+	void* pImLoadLibrary{ nullptr };
+	void* pImGetProcAddress{ nullptr };
 	VirtualMemoryHandle pAlloc;
-	DWORD dwTimeStamp;
-	DWORD dwExeSize;
-	DWORD dwExeCRC;
+	DWORD dwTimeStamp{ 0u };
+	DWORD dwExeSize{ 0u };
+	DWORD dwExeCRC{ 0u };
 
-	bool bControlLoaded;
-	bool bDLLsLoaded;
-	bool bHooksCreated;
+	bool bControlLoaded{ false };
+	bool bDLLsLoaded{ false };
+	bool bHooksCreated{ false };
 
-	void* pLastBP;
+	void* pLastBP{ nullptr };
 
-	bool bAVLogged;
+	bool bAVLogged{ false };
 
 	//data addresses
-	BYTE* pdData;
+	BYTE* pdData{ nullptr };
 
-	void* pdProcAddress;
-	void* pdMessage;
-	void* pdReturnEIP;
-	void* pdRegisters;
-	void* pdBuffer;
+	void* pdProcAddress{ nullptr };
+	void* pdMessage{ nullptr };
+	void* pdReturnEIP{ nullptr };
+	void* pdRegisters{ nullptr };
+	void* pdBuffer{ nullptr };
 
-	void* pdLibName;
-	void* pdProcName;
+	void* pdLibName{ nullptr };
+	void* pdProcName{ nullptr };
 
 	//Code addresses
-	BYTE* pcLoadLibrary;
-	BYTE* pcLoadLibraryEnd;
+	BYTE* pcLoadLibrary{ nullptr };
+	BYTE* pcLoadLibraryEnd{ nullptr };
 
 	struct HookBuffer {
 		std::map<void*, std::vector<Hook>> hooks;
