@@ -142,14 +142,18 @@ bool PortableExecutable::ReadCString(
 	return false;
 }
 
-const IMAGE_SECTION_HEADER * PortableExecutable::FindSection(const char *findName) const {
-	const size_t slen = strlen(findName);
-	assert(slen <= IMAGE_SIZEOF_SHORT_NAME);
-	auto found = std::find_if(vecPESections.begin(), vecPESections.end(), [slen, findName](auto const& section) {
-		return !memcmp(findName, section.Name, slen);
-	});
+IMAGE_SECTION_HEADER const* PortableExecutable::FindSection(
+	std::string_view const name) const noexcept
+{
+	assert(name.size() <= IMAGE_SIZEOF_SHORT_NAME);
 
-	if(found == vecPESections.end()) {
+	auto const found = std::find_if(
+		vecPESections.cbegin(), vecPESections.cend(),
+		[name](auto const& section) {
+			return !memcmp(section.Name, name.data(), name.size());
+		});
+
+	if(found == vecPESections.cend()) {
 		return nullptr;
 	} else {
 		return &(*found);

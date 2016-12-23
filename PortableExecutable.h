@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <windows.h>
 
 struct PEThunkData
@@ -85,7 +86,7 @@ public:
 
 	bool ReadCString(DWORD dwRawAddress, std::string &result) const;
 
-	const IMAGE_SECTION_HEADER * FindSection(const char * findName) const;
+	IMAGE_SECTION_HEADER const* FindSection(std::string_view name) const noexcept;
 
 private:
 	bool ReadFile();
