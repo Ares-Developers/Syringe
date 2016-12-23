@@ -6,7 +6,13 @@
 #include "PortableExecutable.h"
 #include <iostream>
 #include <map>
+#include <string_view>
 #include "CRC32.h"
+
+// returns something %.*s can format
+inline auto printable(std::string_view const string) {
+	return std::make_pair(string.size(), string.data());
+}
 
 class SyringeDebugger
 {
@@ -30,8 +36,8 @@ public:
 	{}
 
 	//Debugger
-	bool DebugProcess(char const* arguments);
-	bool Run(char const* arguments);
+	bool DebugProcess(std::string_view arguments);
+	bool Run(std::string_view arguments);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
 	//Breakpoints
@@ -44,7 +50,7 @@ public:
 	bool ReadMem(const void* address, void* buffer, DWORD size);
 
 	//Syringe
-	bool RetrieveInfo(std::string filename);
+	bool RetrieveInfo(std::string_view filename);
 	void FindDLLs();
 
 private:

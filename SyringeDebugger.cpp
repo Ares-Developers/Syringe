@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool SyringeDebugger::DebugProcess(char const* const arguments)
+bool SyringeDebugger::DebugProcess(std::string_view const arguments)
 {
 	STARTUPINFO startupInfo;
 	memset(&startupInfo, 0, sizeof(startupInfo));
@@ -18,7 +18,8 @@ bool SyringeDebugger::DebugProcess(char const* const arguments)
 
 	SetEnvironmentVariable("_NO_DEBUG_HEAP", "1");
 
-	auto command_line = '"' + exe + "\" " + arguments;
+	auto command_line = '"' + exe + "\" ";
+	command_line += arguments;
 
 	return (CreateProcess(
 		exe.c_str(), command_line.data(), nullptr, nullptr, false,
@@ -408,13 +409,13 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	return DBG_CONTINUE;
 }
 
-bool SyringeDebugger::Run(char const* const arguments)
+bool SyringeDebugger::Run(std::string_view const arguments)
 {
 	if(!bControlLoaded || exe.empty()) {
 		return false;
 	}
 
-	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %s\"", exe.c_str(), arguments);
+	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %.*s\"", exe.c_str(), printable(arguments));
 
 	if(!DebugProcess(arguments)) {
 		return false;
@@ -578,11 +579,11 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	}
 }
 
-bool SyringeDebugger::RetrieveInfo(std::string filename)
+bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 {
 	bControlLoaded = false;
 
-	exe = std::move(filename);
+	exe = filename;
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
