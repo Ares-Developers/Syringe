@@ -64,7 +64,9 @@ public:
 
 	const char * GetFilename() const { return Filename.c_str(); }
 
-	bool IsValid() const { return Handle != nullptr; }
+	explicit operator bool() const noexcept {
+		return Handle;
+	}
 
 	//PE
 	const IMAGE_DOS_HEADER& GetDOSHeader() const { return uDOSHeader; }

@@ -587,8 +587,7 @@ bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
-	PortableExecutable pe(exe);
-	if(pe.IsValid())
+	if(PortableExecutable pe{ exe })
 	{
 		DWORD dwImageBase = pe.GetImageBase();
 
@@ -667,8 +666,7 @@ void SyringeDebugger::FindDLLs()
 
 			//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
-			PortableExecutable DLL(fn);
-			if(DLL.IsValid()) {
+			if(PortableExecutable DLL{ fn }) {
 				HookBuffer buffer;
 
 				bool canLoad = false;
