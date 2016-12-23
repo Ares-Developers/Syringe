@@ -146,11 +146,13 @@ IMAGE_SECTION_HEADER const* PortableExecutable::FindSection(
 	std::string_view const name) const noexcept
 {
 	assert(name.size() <= IMAGE_SIZEOF_SHORT_NAME);
+	char buffer[IMAGE_SIZEOF_SHORT_NAME] = {};
+	std::memcpy(buffer, name.data(), name.size());
 
 	auto const found = std::find_if(
 		vecPESections.cbegin(), vecPESections.cend(),
-		[name](auto const& section) {
-			return !memcmp(section.Name, name.data(), name.size());
+		[&buffer](auto const& section) {
+			return !memcmp(section.Name, buffer, std::size(buffer));
 		});
 
 	if(found == vecPESections.cend()) {
