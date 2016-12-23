@@ -112,25 +112,27 @@ DWORD PortableExecutable::GetImageBase() const {
 	return this->GetPEHeader().OptionalHeader.ImageBase;
 }
 
-bool PortableExecutable::ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const {
-	if(!Filename.empty()) {
-		assert(Handle);
-		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
-			return (fread(Dest, Size, 1, Handle) == 1);
+bool PortableExecutable::ReadBytes(
+	DWORD const dwRawAddress, size_t const Size, void* const Dest) const
+{
+	if(auto const pFile = Handle.get()) {
+		if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
+			return (fread(Dest, Size, 1, pFile) == 1);
 		}
 	}
 	return false;
 }
 
-bool PortableExecutable::ReadCString(DWORD dwRawAddress, std::string &Result) const {
-	if(!Filename.empty()) {
-		assert(Handle);
-		if(!fseek(Handle, static_cast<long>(dwRawAddress), SEEK_SET)) {
+bool PortableExecutable::ReadCString(
+	DWORD const dwRawAddress, std::string& Result) const
+{
+	if(auto const pFile = Handle.get()) {
+		if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
 			constexpr size_t sz = 0x100;
 			char tmpBuf[sz];
 
 			tmpBuf[0] = 0;
-			if(fread(tmpBuf, 1, sz, Handle) == sz) {
+			if(fread(tmpBuf, 1, sz, pFile) == sz) {
 				tmpBuf[sz - 1] = 0;
 				Result.assign(tmpBuf);
 				return true;
