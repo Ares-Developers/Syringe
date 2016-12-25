@@ -833,7 +833,9 @@ bool SyringeDebugger::Handshake(
 			if(SUCCEEDED(res))
 			{
 				buffer.back() = 0;
-				Log::WriteLine("SyringeDebugger::Handshake: Answers \"%s\" (%X)", buffer.data(), res);
+				Log::WriteLine(
+					"SyringeDebugger::Handshake: Answers \"%s\" (%X)",
+					buffer.data(), res);
 				outOk = (res == S_OK);
 			}
 			else
