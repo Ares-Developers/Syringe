@@ -717,8 +717,8 @@ void SyringeDebugger::FindDLLs()
 	}
 }
 
-bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hooks) {
-	std::string inj = lib + ".inj";
+bool SyringeDebugger::ParseInjFileHooks(std::string_view const lib, HookBuffer &hooks) {
+	auto const inj = std::string(lib) + ".inj";
 
 	if(auto F = FileHandle(_fsopen(inj.c_str(), "r", _SH_DENYWR))) {
 		char line[0x100] = "\0";
