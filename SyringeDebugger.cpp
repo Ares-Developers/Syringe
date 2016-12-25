@@ -730,7 +730,7 @@ bool SyringeDebugger::ParseInjFileHooks(const std::string &lib, HookBuffer &hook
 
 				// parse the line (length is optional, defaults to 0)
 				if(sscanf_s(line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) > 2) {
-					hooks.add(eip, lib.c_str(), func, n_over);
+					hooks.add(eip, lib, func, n_over);
 				}
 			}
 		}
@@ -776,6 +776,7 @@ bool SyringeDebugger::ParseHooksSection(
 {
 	constexpr auto const Size = sizeof(hookdecl);
 	auto const base = DLL.GetImageBase();
+	auto const filename = std::string_view(DLL.GetFilename());
 
 	auto const begin = hooks.PointerToRawData;
 	auto const end = begin + hooks.SizeOfRawData;
@@ -790,7 +791,7 @@ bool SyringeDebugger::ParseHooksSection(
 				auto const rawNamePtr = DLL.VirtualToRaw(h.hookNamePtr - base);
 				if(DLL.ReadCString(rawNamePtr, hookName)) {
 					auto const eip = reinterpret_cast<void*>(h.hookAddr);
-					buffer.add(eip, DLL.GetFilename(), hookName.c_str(), h.hookSize);
+					buffer.add(eip, filename, hookName, h.hookSize);
 				}
 			}
 		} else {

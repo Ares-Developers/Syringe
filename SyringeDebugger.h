@@ -130,10 +130,13 @@ private:
 			count++;
 		}
 
-		void add(void* eip, const char* filename, const char* proc, size_t num_overridden) {
+		void add(
+			void* const eip, std::string_view const filename,
+			std::string_view const proc, size_t const num_overridden)
+		{
 			Hook hook;
-			strncpy_s(hook.lib, filename, _TRUNCATE);
-			strncpy_s(hook.proc, proc, _TRUNCATE);
+			hook.lib[filename.copy(hook.lib, std::size(hook.lib) - 1)] = '\0';
+			hook.proc[proc.copy(hook.proc, std::size(hook.proc) - 1)] = '\0';
 			hook.proc_address = nullptr;
 			hook.num_overridden = num_overridden;
 
