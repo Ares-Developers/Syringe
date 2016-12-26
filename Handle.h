@@ -1,8 +1,12 @@
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+//      WIN32_FAT_AND_STUPID
+
+#include <utility>
+
 #include <stdio.h>
 #include <Windows.h>
-#include <utility>
 
 struct FileHandleDeleter {
 	void operator () (FILE* file) const noexcept {

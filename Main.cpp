@@ -1,5 +1,5 @@
-#include "SyringeDebugger.h"
 #include "Log.h"
+#include "SyringeDebugger.h"
 
 #include <string>
 

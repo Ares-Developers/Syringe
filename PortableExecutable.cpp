@@ -1,10 +1,12 @@
-#include <algorithm>
-#include <cassert>
-#include <share.h>
-
 #include "PortableExecutable.h"
+
 #include "Handle.h"
 #include "Log.h"
+
+#include <algorithm>
+#include <cassert>
+
+#include <share.h>
 
 DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without the image base!
 {

@@ -2,12 +2,14 @@
 #define WIN32_LEAN_AND_MEAN
 //      WIN32_FAT_AND_STUPID
 
-#include <windows.h>
+#include "CRC32.h"
 #include "PortableExecutable.h"
+
 #include <iostream>
 #include <map>
 #include <string_view>
-#include "CRC32.h"
+
+#include <windows.h>
 
 // returns something %.*s can format
 inline auto printable(std::string_view const string) {

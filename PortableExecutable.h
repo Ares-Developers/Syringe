@@ -1,12 +1,15 @@
 //A class to parse PE files
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+//      WIN32_FAT_AND_STUPID
+
 #include "Handle.h"
 
-#include <stdio.h>
-#include <vector>
 #include <string>
 #include <string_view>
+#include <vector>
+
 #include <windows.h>
 
 struct PEThunkData

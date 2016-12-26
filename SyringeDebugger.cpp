@@ -1,11 +1,13 @@
 #include "SyringeDebugger.h"
-#include "Handle.h"
-#include "FindFile.h"
-#include "Log.h"
+
 #include "CRC32.h"
+#include "FindFile.h"
+#include "Handle.h"
+#include "Log.h"
 
 #include <fstream>
 #include <memory>
+
 #include <DbgHelp.h>
 
 using namespace std;
