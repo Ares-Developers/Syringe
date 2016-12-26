@@ -8,70 +8,77 @@
 #include <stdio.h>
 #include <Windows.h>
 
-struct FileHandleDeleter {
-	void operator () (FILE* file) const noexcept {
+template<typename T>
+struct HandleTraits {
+	using type = T;
+
+	static type default_value() noexcept {
+		return T{};
+	}
+};
+
+struct FileHandleTraits : public HandleTraits<FILE*> {
+	static void close(FILE* file) noexcept {
 		if(file) {
 			fclose(file);
 		}
 	}
 };
 
-struct ThreadHandleDeleter {
-	using pointer = HANDLE;
-
-	void operator () (pointer handle) const noexcept {
+struct ThreadHandleTraits : public HandleTraits<HANDLE> {
+	static void close(HANDLE handle) noexcept {
 		if(handle) {
 			CloseHandle(handle);
 		}
 	}
 };
 
-struct ModuleHandleDeleter {
-	using pointer = HMODULE;
-
-	void operator () (pointer handle) const noexcept {
+struct ModuleHandleTraits : public HandleTraits<HMODULE> {
+	static void close(HMODULE handle) noexcept {
 		if(handle) {
 			FreeLibrary(handle);
 		}
 	}
 };
 
-struct FindHandleDeleter {
-	using pointer = HANDLE;
+struct FindHandleTraits : public HandleTraits<HANDLE> {
+	static HANDLE default_value() noexcept {
+		return INVALID_HANDLE_VALUE;
+	}
 
-	void operator () (pointer handle) const noexcept {
+	static void close(HANDLE handle) noexcept {
 		if(handle != INVALID_HANDLE_VALUE) {
 			FindClose(handle);
 		}
 	}
 };
 
-struct LocalAllocHandleDeleter {
-	using pointer = HLOCAL;
-
-	void operator () (pointer handle) const noexcept {
+struct LocalAllocHandleTraits : public HandleTraits<HLOCAL> {
+	static void close(HLOCAL handle) noexcept {
 		LocalFree(handle);
 	}
 };
 
 // owns a resource. not copyable, but movable.
-template <typename T, typename Deleter, T Default = T()>
+template <typename Traits>
 struct Handle {
-	constexpr Handle() noexcept = default;
+	using value_type = typename Traits::type;
 
-	constexpr explicit Handle(T value) noexcept
+	Handle() noexcept = default;
+
+	explicit Handle(value_type value) noexcept
 		: Value(value)
 	{ }
 
 	Handle(const Handle&) = delete;
 
-	constexpr Handle(Handle&& other) noexcept
+	Handle(Handle&& other) noexcept
 		: Value(other.release())
 	{ }
 
 	~Handle() noexcept {
-		if(this->Value != Default) {
-			Deleter{}(this->Value);
+		if(*this) {
+			Traits::close(this->Value);
 		}
 	}
 
@@ -82,23 +89,23 @@ struct Handle {
 		return *this;
 	}
 
-	constexpr explicit operator bool() const noexcept {
-		return this->Value != Default;
+	explicit operator bool() const noexcept {
+		return this->Value != Traits::default_value();
 	}
 
-	constexpr operator T () const noexcept {
+	operator value_type () const noexcept {
 		return this->Value;
 	}
 
-	constexpr T get() const noexcept {
+	value_type get() const noexcept {
 		return this->Value;
 	}
 
-	T release() noexcept {
-		return std::exchange(this->Value, Default);
+	value_type release() noexcept {
+		return std::exchange(this->Value, Traits::default_value());
 	}
 
-	void reset(T value) noexcept {
+	void reset(value_type value) noexcept {
 		Handle(this->Value);
 		this->Value = value;
 	}
@@ -107,20 +114,20 @@ struct Handle {
 		Handle(std::move(*this));
 	}
 
-	T* set() noexcept {
+	value_type* set() noexcept {
 		this->clear();
 		return &this->Value;
 	}
 
 private:
-	T Value{ Default };
+	value_type Value{ Traits::default_value() };
 };
 
-using FileHandle = Handle<FILE*, FileHandleDeleter, nullptr>;
-using ThreadHandle = Handle<HANDLE, ThreadHandleDeleter, nullptr>;
-using ModuleHandle = Handle<HMODULE, ModuleHandleDeleter, nullptr>;
-using FindHandle = Handle<HANDLE, FindHandleDeleter, INVALID_HANDLE_VALUE>;
-using LocalAllocHandle = Handle<HLOCAL, LocalAllocHandleDeleter, nullptr>;
+using FileHandle = Handle<FileHandleTraits>;
+using ThreadHandle = Handle<ThreadHandleTraits>;
+using ModuleHandle = Handle<ModuleHandleTraits>;
+using FindHandle = Handle<FindHandleTraits>;
+using LocalAllocHandle = Handle<LocalAllocHandleTraits>;
 
 struct VirtualMemoryHandle {
 	VirtualMemoryHandle() noexcept = default;
