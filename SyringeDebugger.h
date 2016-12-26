@@ -11,11 +11,6 @@
 
 #include <windows.h>
 
-// returns something %.*s can format
-inline auto printable(std::string_view const string) {
-	return std::make_pair(string.size(), string.data());
-}
-
 class SyringeDebugger
 {
 	static const size_t MaxNameLength = 0x100u;

@@ -151,6 +151,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="PortableExecutable.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Support.h" />
     <ClInclude Include="SyringeDebugger.h" />
   </ItemGroup>
   <ItemGroup>

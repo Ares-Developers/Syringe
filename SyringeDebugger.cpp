@@ -4,6 +4,7 @@
 #include "FindFile.h"
 #include "Handle.h"
 #include "Log.h"
+#include "Support.h"
 
 #include <fstream>
 #include <memory>
