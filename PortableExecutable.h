@@ -50,7 +50,7 @@ private:
 	FileHandle Handle;
 	
 public:
-	PortableExecutable(std::string filename) : Filename(std::move(filename)) {
+	PortableExecutable(std::string_view filename) : Filename(filename) {
 		if(!Filename.empty()) {
 			Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
 		}

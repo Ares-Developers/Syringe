@@ -587,7 +587,7 @@ bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
-	if(PortableExecutable pe{ exe })
+	if(PortableExecutable pe{ filename })
 	{
 		DWORD dwImageBase = pe.GetImageBase();
 
@@ -662,7 +662,7 @@ void SyringeDebugger::FindDLLs()
 
 	if(bControlLoaded) {
 		for(auto file = FindFile("*.dll"); file; ++file) {
-			std::string fn(file->cFileName);
+			std::string_view fn(file->cFileName);
 
 			//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
@@ -677,7 +677,7 @@ void SyringeDebugger::FindDLLs()
 				}
 
 				if(canLoad) {
-					Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%s\"", fn.c_str());
+					Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
 
 					if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
 						// canLoad has been updated already
@@ -696,7 +696,7 @@ void SyringeDebugger::FindDLLs()
 						h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
 					}
 				} else if(!buffer.hooks.empty()) {
-					Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%s\"", fn.c_str());
+					Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%.*s\"", printable(fn));
 				}
 
 			//} else {
