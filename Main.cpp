@@ -32,59 +32,70 @@ int Run(char* const lpCmdLine) {
 	Log::WriteLine();
 	Log::WriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
 
-	if(lpCmdLine && *lpCmdLine == '\"')
+	auto exit_code = ERROR_ERRORS_ENCOUNTERED;
+
+	try
 	{
-		auto const pFilenameBegin = lpCmdLine + 1;
-
-		if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
+		if(lpCmdLine && *lpCmdLine == '\"')
 		{
-			std::string file(pFilenameBegin, pFilenameEnd);
-			auto failure = "Could not load executable.";
-			
-			Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
-			Log::WriteLine();
-			SyringeDebugger Debugger;
-			if(Debugger.RetrieveInfo(file))
+			auto const pFilenameBegin = lpCmdLine + 1;
+
+			if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
 			{
-				failure = "Could not run executable.";
+				std::string file(pFilenameBegin, pFilenameEnd);
+				auto failure = "Could not load executable.";
 
-				Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
+				Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
 				Log::WriteLine();
-				Debugger.FindDLLs();
+				SyringeDebugger Debugger;
+				if(Debugger.RetrieveInfo(file))
+				{
+					failure = "Could not run executable.";
 
-				auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
-				Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
-				Log::WriteLine();
+					Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
+					Log::WriteLine();
+					Debugger.FindDLLs();
 
-				if(Debugger.Run(pArgs)) {
-					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
-					Log::WriteLine("WinMain: Exiting on success.");
-					return ERROR_SUCCESS;
+					auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
+					Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
+					Log::WriteLine();
+
+					if(Debugger.Run(pArgs)) {
+						Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
+						Log::WriteLine("WinMain: Exiting on success.");
+						return ERROR_SUCCESS;
+					}
+				}
+
+				if(auto const lasterror = GetLastErrorMessage()) {
+					Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
+
+					auto const msg = std::string(failure) + "\n\n\"" + file + "\"\n\n" + lasterror.message;
+					MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
+
+					exit_code = lasterror.error;
 				}
 			}
-
-			auto exit_code = ERROR_ERRORS_ENCOUNTERED;
-			if(auto const lasterror = GetLastErrorMessage()) {
-				Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
-
-				auto const msg = std::string(failure) + "\n\n\"" + file + "\"\n\n" + lasterror.message;
-				MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
-
-				exit_code = lasterror.error;
-			}
-
-			Log::WriteLine("WinMain: Exiting on failure.");
-			return exit_code;
 		}
+
+		// if this code is reached, the arguments couldn't be parsed
+		throw invalid_command_arguments{};
+	}
+	catch(invalid_command_arguments const& e)
+	{
+		MessageBoxA(
+			nullptr, "Syringe cannot be run just like that.\n\n"
+			"Usage:\nSyringe.exe \"<exe name>\" <arguments>",
+			VersionString, MB_OK | MB_ICONINFORMATION);
+
+		Log::WriteLine(
+			"WinMain: No or invalid command line arguments given, exiting...");
+
+		exit_code = ERROR_INVALID_PARAMETER;
 	}
 
-	// if this code is reached, the arguments couldn't be parsed
-	MessageBoxA(nullptr, "Syringe cannot be run just like that.\n\nUsage:\nSyringe.exe \"<exe name>\" <arguments>",
-		VersionString, MB_OK | MB_ICONINFORMATION);
-
-	Log::WriteLine("WinMain: No or invalid command line arguments given, exiting...");
 	Log::WriteLine("WinMain: Exiting on failure.");
-	return ERROR_INVALID_PARAMETER;
+	return exit_code;
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)

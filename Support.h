@@ -3,11 +3,14 @@
 #define WIN32_LEAN_AND_MEAN
 //      WIN32_FAT_AND_STUPID
 
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include <Windows.h>
+
+struct invalid_command_arguments : std::exception {};
 
 // returns something %.*s can format
 inline auto printable(std::string_view const string) {
