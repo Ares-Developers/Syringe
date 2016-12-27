@@ -1,5 +1,6 @@
 #include "Log.h"
 #include "SyringeDebugger.h"
+#include "Support.h"
 
 #include <string>
 
@@ -14,22 +15,7 @@ inline auto GetLastErrorMessage(DWORD const error = GetLastError())
 		explicit operator bool() const noexcept {
 			return this->error != ERROR_SUCCESS;
 		}
-	} ret{ error };
-
-	LocalAllocHandle handle;
-
-	auto count = FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		reinterpret_cast<LPTSTR>(handle.set()), 0u, nullptr);
-
-	auto const message = static_cast<LPTSTR>(handle.get());
-	while(count && isspace(static_cast<unsigned char>(message[count - 1]))) {
-		--count;
-	}
-
-	ret.message.assign(message, count);
+	} ret{ error, GetFormatMessage(error) };
 
 	return ret;
 }
