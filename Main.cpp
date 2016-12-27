@@ -6,20 +6,6 @@
 
 #include <commctrl.h>
 
-inline auto GetLastErrorMessage(DWORD const error = GetLastError())
-{
-	struct lasterror {
-		DWORD error;
-		std::string message;
-
-		explicit operator bool() const noexcept {
-			return this->error != ERROR_SUCCESS;
-		}
-	} ret{ error, GetFormatMessage(error) };
-
-	return ret;
-}
-
 int Run(char* const lpCmdLine) {
 	constexpr auto const VersionString = "Syringe 0.7.0.6";
 
@@ -32,6 +18,7 @@ int Run(char* const lpCmdLine) {
 	Log::WriteLine();
 	Log::WriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
 
+	auto failure = "Could not load executable.";
 	auto exit_code = ERROR_ERRORS_ENCOUNTERED;
 
 	try
@@ -43,7 +30,6 @@ int Run(char* const lpCmdLine) {
 			if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
 			{
 				std::string file(pFilenameBegin, pFilenameEnd);
-				auto failure = "Could not load executable.";
 
 				Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
 				Log::WriteLine();
@@ -67,19 +53,22 @@ int Run(char* const lpCmdLine) {
 					}
 				}
 
-				if(auto const lasterror = GetLastErrorMessage()) {
-					Log::WriteLine("WinMain: %s (%d)", lasterror.message.c_str(), lasterror.error);
-
-					auto const msg = std::string(failure) + "\n\n\"" + file + "\"\n\n" + lasterror.message;
-					MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
-
-					exit_code = lasterror.error;
-				}
+				// something went wrong
+				throw_lasterror_or(exit_code, file);
 			}
 		}
 
 		// if this code is reached, the arguments couldn't be parsed
 		throw invalid_command_arguments{};
+	}
+	catch(lasterror const& e)
+	{
+		Log::WriteLine("WinMain: %s (%d)", e.message.c_str(), e.error);
+
+		auto const msg = std::string(failure) + "\n\n" + e.message;
+		MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
+
+		exit_code = e.error;
 	}
 	catch(invalid_command_arguments const& e)
 	{

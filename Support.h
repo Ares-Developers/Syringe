@@ -33,3 +33,29 @@ inline auto GetFormatMessage(DWORD const error) {
 
 	return std::string(message, count);
 }
+
+struct lasterror : std::exception {
+	lasterror(DWORD const error)
+		: error(error)
+	{ }
+
+	lasterror(DWORD const error, std::string insert)
+		: error(error),	insert(std::move(insert))
+	{ }
+
+	DWORD error{ 0 };
+	std::string message{ GetFormatMessage(error) };
+	std::string insert;
+};
+
+[[noreturn]] inline void throw_lasterror(DWORD error_code, std::string insert) {
+	throw lasterror(error_code, std::move(insert));
+}
+
+[[noreturn]] inline void throw_lasterror_or(
+	DWORD alterative, std::string insert)
+{
+	auto const error_code = GetLastError();
+	throw_lasterror(
+		error_code ? error_code : alterative, std::move(insert));
+}
