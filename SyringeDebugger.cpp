@@ -414,10 +414,6 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 bool SyringeDebugger::Run(std::string_view const arguments)
 {
-	if(!bControlLoaded || exe.empty()) {
-		return false;
-	}
-
 	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %.*s\"", exe.c_str(), printable(arguments));
 
 	if(!DebugProcess(arguments)) {
@@ -584,8 +580,6 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 
 void SyringeDebugger::RetrieveInfo()
 {
-	bControlLoaded = false;
-
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
 	try {
@@ -653,69 +647,65 @@ void SyringeDebugger::RetrieveInfo()
 	Log::WriteLine();
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
-
-	bControlLoaded = true;
 }
 
 void SyringeDebugger::FindDLLs()
 {
 	bpMap.clear();
 
-	if(bControlLoaded) {
-		for(auto file = FindFile("*.dll"); file; ++file) {
-			std::string_view fn(file->cFileName);
+	for(auto file = FindFile("*.dll"); file; ++file) {
+		std::string_view fn(file->cFileName);
 
-			//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
+		//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
-			try {
-				PortableExecutable DLL{ fn };
-				HookBuffer buffer;
+		try {
+			PortableExecutable DLL{ fn };
+			HookBuffer buffer;
 
-				bool canLoad = false;
-				if(auto hooks = DLL.FindSection(".syhks00")) {
-					canLoad = ParseHooksSection(DLL, *hooks, buffer);
-				} else {
-					canLoad = ParseInjFileHooks(fn, buffer);
-				}
-
-				if(canLoad) {
-					Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
-
-					if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
-						// canLoad has been updated already
-					} else if(auto hosts = DLL.FindSection(".syexe00")) {
-						canLoad = CanHostDLL(DLL, *hosts);
-					}
-				}
-
-				if(canLoad) {
-					for(const auto& it : buffer.hooks)
-					{
-						void* eip = it.first;
-						auto &h = bpMap[eip];
-						h.p_caller_code.clear();
-						h.original_opcode = 0x00;
-						h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
-					}
-				} else if(!buffer.hooks.empty()) {
-					Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%.*s\"", printable(fn));
-				}
-			} catch(...) {
-				//Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%.*s\"", printable(fn));
+			bool canLoad = false;
+			if(auto hooks = DLL.FindSection(".syhks00")) {
+				canLoad = ParseHooksSection(DLL, *hooks, buffer);
+			} else {
+				canLoad = ParseInjFileHooks(fn, buffer);
 			}
-		}
 
-		// summarize all hooks
-		v_AllHooks.clear();
-		for(auto& it : bpMap) {
-			for(auto& i : it.second.hooks) {
-				v_AllHooks.push_back(&i);
+			if(canLoad) {
+				Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
+
+				if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
+					// canLoad has been updated already
+				} else if(auto hosts = DLL.FindSection(".syexe00")) {
+					canLoad = CanHostDLL(DLL, *hosts);
+				}
 			}
-		}
 
-		Log::WriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
-		Log::WriteLine();
+			if(canLoad) {
+				for(const auto& it : buffer.hooks)
+				{
+					void* eip = it.first;
+					auto &h = bpMap[eip];
+					h.p_caller_code.clear();
+					h.original_opcode = 0x00;
+					h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
+				}
+			} else if(!buffer.hooks.empty()) {
+				Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%.*s\"", printable(fn));
+			}
+		} catch(...) {
+			//Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%.*s\"", printable(fn));
+		}
 	}
+
+	// summarize all hooks
+	v_AllHooks.clear();
+	for(auto& it : bpMap) {
+		for(auto& i : it.second.hooks) {
+			v_AllHooks.push_back(&i);
+		}
+	}
+
+	Log::WriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
+	Log::WriteLine();
 }
 
 bool SyringeDebugger::ParseInjFileHooks(std::string_view const lib, HookBuffer &hooks) {

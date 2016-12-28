@@ -94,7 +94,6 @@ private:
 	DWORD dwExeSize{ 0u };
 	DWORD dwExeCRC{ 0u };
 
-	bool bControlLoaded{ false };
 	bool bDLLsLoaded{ false };
 	bool bHooksCreated{ false };
 
