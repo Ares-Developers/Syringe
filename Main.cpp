@@ -6,7 +6,7 @@
 
 #include <commctrl.h>
 
-int Run(char* const lpCmdLine) {
+int Run(std::string_view const arguments) {
 	constexpr auto const VersionString = "Syringe 0.7.0.6";
 
 	InitCommonControls();
@@ -16,14 +16,14 @@ int Run(char* const lpCmdLine) {
 	Log::WriteLine(VersionString);
 	Log::WriteLine("===============");
 	Log::WriteLine();
-	Log::WriteLine("WinMain: lpCmdLine = \"%s\"", lpCmdLine);
+	Log::WriteLine("WinMain: arguments = \"%.*s\"", printable(arguments));
 
 	auto failure = "Could not load executable.";
 	auto exit_code = ERROR_ERRORS_ENCOUNTERED;
 
 	try
 	{
-		auto const command = get_command_line(lpCmdLine);
+		auto const command = get_command_line(arguments);
 
 		if(!command.flags.empty()) {
 			// artificial limitation
