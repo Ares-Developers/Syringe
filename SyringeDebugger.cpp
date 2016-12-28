@@ -45,7 +45,11 @@ bool SyringeDebugger::ReadMem(const void* address, void* buffer, DWORD size)
 
 VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 {
-	return VirtualMemoryHandle(pInfo.hProcess, address, size);
+	VirtualMemoryHandle res(pInfo.hProcess, address, size);
+	if(!res) {
+		throw_lasterror_or(ERROR_ERRORS_ENCOUNTERED, exe);
+	}
+	return res;
 }
 
 bool SyringeDebugger::SetBP(void* address)
@@ -424,10 +428,6 @@ bool SyringeDebugger::Run(std::string_view const arguments)
 	pAlloc = AllocMem(nullptr, 0x1000);
 
 	Log::WriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", static_cast<void*>(pAlloc));
-
-	if(!pAlloc) {
-		return false;
-	}
 
 	Log::WriteLine("SyringeDebugger::Run: Filling allocated space with zero...");
 	char zero[0x1000] = "\0";
