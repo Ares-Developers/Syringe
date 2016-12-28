@@ -23,37 +23,34 @@ int Run(char* const lpCmdLine) {
 
 	try
 	{
-		if(lpCmdLine && *lpCmdLine == '\"')
-		{
-			auto const pFilenameBegin = lpCmdLine + 1;
+		auto const command = get_command_line(lpCmdLine);
 
-			if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
-			{
-				std::string_view file(pFilenameBegin, pFilenameEnd - pFilenameBegin);
-
-				Log::WriteLine("WinMain: Trying to load executable file \"%.*s\"...", printable(file));
-				Log::WriteLine();
-
-				SyringeDebugger Debugger{ file };
-				failure = "Could not run executable.";
-
-				Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
-				Log::WriteLine();
-				Debugger.FindDLLs();
-
-				auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
-				Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
-				Log::WriteLine();
-
-				Debugger.Run(pArgs);
-				Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
-				Log::WriteLine("WinMain: Exiting on success.");
-				return ERROR_SUCCESS;
-			}
+		if(!command.flags.empty()) {
+			// artificial limitation
+			throw invalid_command_arguments{};
 		}
 
-		// if this code is reached, the arguments couldn't be parsed
-		throw invalid_command_arguments{};
+		Log::WriteLine(
+			"WinMain: Trying to load executable file \"%.*s\"...",
+			printable(command.executable));
+		Log::WriteLine();
+
+		SyringeDebugger Debugger{ command.executable };
+		failure = "Could not run executable.";
+
+		Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
+		Log::WriteLine();
+		Debugger.FindDLLs();
+
+		Log::WriteLine(
+			"WinMain: SyringeDebugger::Run(\"%.*s\");",
+			printable(command.arguments));
+		Log::WriteLine();
+
+		Debugger.Run(command.arguments);
+		Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
+		Log::WriteLine("WinMain: Exiting on success.");
+		return ERROR_SUCCESS;
 	}
 	catch(lasterror const& e)
 	{

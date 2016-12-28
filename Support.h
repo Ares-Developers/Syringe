@@ -12,6 +12,47 @@
 
 struct invalid_command_arguments : std::exception {};
 
+inline auto trim(std::string_view string) {
+	auto const first = string.find_first_not_of(' ');
+	if(first != std::string_view::npos) {
+		auto const last = string.find_last_not_of(' ');
+		string = string.substr(first, last - first + 1);
+	}
+	return string;
+}
+
+inline auto get_command_line(std::string_view arguments) {
+	struct argument_set {
+		std::string_view flags;
+		std::string_view executable;
+		std::string_view arguments;
+	};
+
+	try {
+		argument_set ret;
+
+		auto const end_flags = arguments.find('"');
+		ret.flags = trim(arguments.substr(0, end_flags));
+		if(end_flags != std::string_view::npos) {
+			arguments.remove_prefix(end_flags + 1);
+
+			auto const end_executable = arguments.find('"');
+			if(end_executable != std::string_view::npos) {
+				ret.executable = trim(arguments.substr(0, end_executable));
+				arguments.remove_prefix(end_executable + 1);
+
+				ret.arguments = trim(arguments);
+
+				return ret;
+			}
+		}
+	} catch(...) {
+		// swallow everything, throw new one
+	}
+
+	throw invalid_command_arguments{};
+}
+
 // returns something %.*s can format
 inline auto printable(std::string_view const string) {
 	return std::make_pair(string.size(), string.data());
