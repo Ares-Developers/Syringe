@@ -29,9 +29,9 @@ int Run(char* const lpCmdLine) {
 
 			if(auto const pFilenameEnd = strstr(pFilenameBegin, "\""))
 			{
-				std::string file(pFilenameBegin, pFilenameEnd);
+				std::string_view file(pFilenameBegin, pFilenameEnd - pFilenameBegin);
 
-				Log::WriteLine("WinMain: Trying to load executable file \"%s\"...", file.c_str());
+				Log::WriteLine("WinMain: Trying to load executable file \"%.*s\"...", printable(file));
 				Log::WriteLine();
 				SyringeDebugger Debugger;
 				if(Debugger.RetrieveInfo(file))
@@ -54,7 +54,7 @@ int Run(char* const lpCmdLine) {
 				}
 
 				// something went wrong
-				throw_lasterror_or(exit_code, file);
+				throw_lasterror_or(exit_code, std::string(file));
 			}
 		}
 
