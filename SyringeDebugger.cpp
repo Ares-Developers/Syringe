@@ -419,7 +419,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	return DBG_CONTINUE;
 }
 
-bool SyringeDebugger::Run(std::string_view const arguments)
+void SyringeDebugger::Run(std::string_view const arguments)
 {
 	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %.*s\"", exe.c_str(), printable(arguments));
 	DebugProcess(arguments);
@@ -561,8 +561,6 @@ bool SyringeDebugger::Run(std::string_view const arguments)
 
 	Log::WriteLine("SyringeDebugger::Run: Done with exit code %u.", exit_code);
 	Log::WriteLine();
-
-	return true;
 }
 
 void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)

@@ -45,14 +45,10 @@ int Run(char* const lpCmdLine) {
 				Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
 				Log::WriteLine();
 
-				if(Debugger.Run(pArgs)) {
-					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
-					Log::WriteLine("WinMain: Exiting on success.");
-					return ERROR_SUCCESS;
-				}
-
-				// something went wrong
-				throw_lasterror_or(exit_code, std::string(file));
+				Debugger.Run(pArgs);
+				Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
+				Log::WriteLine("WinMain: Exiting on success.");
+				return ERROR_SUCCESS;
 			}
 		}
 

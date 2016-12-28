@@ -27,7 +27,7 @@ public:
 	}
 
 	//Debugger
-	bool Run(std::string_view arguments);
+	void Run(std::string_view arguments);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
 	//Breakpoints
