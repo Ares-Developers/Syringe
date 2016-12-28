@@ -27,7 +27,6 @@ public:
 	}
 
 	//Debugger
-	bool DebugProcess(std::string_view arguments);
 	bool Run(std::string_view arguments);
 	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
 
@@ -45,6 +44,7 @@ public:
 
 private:
 	void RetrieveInfo();
+	void DebugProcess(std::string_view arguments);
 
 	//Helper Functions
 	static DWORD __fastcall RelativeOffset(const void* from, const void* to);

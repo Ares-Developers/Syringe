@@ -13,7 +13,7 @@
 
 using namespace std;
 
-bool SyringeDebugger::DebugProcess(std::string_view const arguments)
+void SyringeDebugger::DebugProcess(std::string_view const arguments)
 {
 	STARTUPINFO startupInfo;
 	memset(&startupInfo, 0, sizeof(startupInfo));
@@ -24,10 +24,13 @@ bool SyringeDebugger::DebugProcess(std::string_view const arguments)
 	auto command_line = '"' + exe + "\" ";
 	command_line += arguments;
 
-	return (CreateProcess(
+	if(CreateProcess(
 		exe.c_str(), command_line.data(), nullptr, nullptr, false,
 		DEBUG_ONLY_THIS_PROCESS | CREATE_SUSPENDED,
-		nullptr, nullptr, &startupInfo, &pInfo) != FALSE);
+		nullptr, nullptr, &startupInfo, &pInfo) == FALSE)
+	{
+		throw_lasterror_or(ERROR_ERRORS_ENCOUNTERED, exe);
+	}
 }
 
 bool SyringeDebugger::PatchMem(void* address, const void* buffer, DWORD size)
@@ -415,10 +418,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 bool SyringeDebugger::Run(std::string_view const arguments)
 {
 	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %.*s\"", exe.c_str(), printable(arguments));
-
-	if(!DebugProcess(arguments)) {
-		return false;
-	}
+	DebugProcess(arguments);
 
 	Log::WriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
 	pAlloc = AllocMem(nullptr, 0x1000);
