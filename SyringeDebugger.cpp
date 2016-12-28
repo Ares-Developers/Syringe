@@ -582,16 +582,14 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	}
 }
 
-void SyringeDebugger::RetrieveInfo(std::string_view const filename)
+void SyringeDebugger::RetrieveInfo()
 {
 	bControlLoaded = false;
-
-	exe = filename;
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
 	try {
-		PortableExecutable pe{ filename };
+		PortableExecutable pe{ exe };
 		DWORD dwImageBase = pe.GetImageBase();
 
 		//Creation time stamp

@@ -34,8 +34,7 @@ int Run(char* const lpCmdLine) {
 				Log::WriteLine("WinMain: Trying to load executable file \"%.*s\"...", printable(file));
 				Log::WriteLine();
 
-				SyringeDebugger Debugger;
-				Debugger.RetrieveInfo(file);
+				SyringeDebugger Debugger{ file };
 				failure = "Could not run executable.";
 
 				Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");

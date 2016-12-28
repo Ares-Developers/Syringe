@@ -20,7 +20,11 @@ class SyringeDebugger
 	static const BYTE NOP = 0x90;
 
 public:
-	SyringeDebugger() = default;
+	SyringeDebugger(std::string_view filename)
+		: exe(filename)
+	{
+		RetrieveInfo();
+	}
 
 	//Debugger
 	bool DebugProcess(std::string_view arguments);
@@ -37,10 +41,11 @@ public:
 	bool ReadMem(const void* address, void* buffer, DWORD size);
 
 	//Syringe
-	void RetrieveInfo(std::string_view filename);
 	void FindDLLs();
 
 private:
+	void RetrieveInfo();
+
 	//Helper Functions
 	static DWORD __fastcall RelativeOffset(const void* from, const void* to);
 
