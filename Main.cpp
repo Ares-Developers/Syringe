@@ -33,24 +33,23 @@ int Run(char* const lpCmdLine) {
 
 				Log::WriteLine("WinMain: Trying to load executable file \"%.*s\"...", printable(file));
 				Log::WriteLine();
+
 				SyringeDebugger Debugger;
-				if(Debugger.RetrieveInfo(file))
-				{
-					failure = "Could not run executable.";
+				Debugger.RetrieveInfo(file);
+				failure = "Could not run executable.";
 
-					Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
-					Log::WriteLine();
-					Debugger.FindDLLs();
+				Log::WriteLine("WinMain: SyringeDebugger::FindDLLs();");
+				Log::WriteLine();
+				Debugger.FindDLLs();
 
-					auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
-					Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
-					Log::WriteLine();
+				auto const pArgs = &pFilenameEnd[1 + strspn(pFilenameEnd + 1, " ")];
+				Log::WriteLine("WinMain: SyringeDebugger::Run(\"%s\");", pArgs);
+				Log::WriteLine();
 
-					if(Debugger.Run(pArgs)) {
-						Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
-						Log::WriteLine("WinMain: Exiting on success.");
-						return ERROR_SUCCESS;
-					}
+				if(Debugger.Run(pArgs)) {
+					Log::WriteLine("WinMain: SyringeDebugger::Run finished.");
+					Log::WriteLine("WinMain: Exiting on success.");
+					return ERROR_SUCCESS;
 				}
 
 				// something went wrong

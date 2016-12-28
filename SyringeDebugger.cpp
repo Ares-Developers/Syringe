@@ -582,7 +582,7 @@ void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
 	}
 }
 
-bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
+void SyringeDebugger::RetrieveInfo(std::string_view const filename)
 {
 	bControlLoaded = false;
 
@@ -657,7 +657,6 @@ bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
 
 	bControlLoaded = true;
-	return true;
 }
 
 void SyringeDebugger::FindDLLs()

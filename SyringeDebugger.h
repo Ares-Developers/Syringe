@@ -37,7 +37,7 @@ public:
 	bool ReadMem(const void* address, void* buffer, DWORD size);
 
 	//Syringe
-	bool RetrieveInfo(std::string_view filename);
+	void RetrieveInfo(std::string_view filename);
 	void FindDLLs();
 
 private:
