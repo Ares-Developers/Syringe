@@ -590,8 +590,8 @@ bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 
 	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
 
-	if(PortableExecutable pe{ filename })
-	{
+	try {
+		PortableExecutable pe{ filename };
 		DWORD dwImageBase = pe.GetImageBase();
 
 		//Creation time stamp
@@ -615,18 +615,19 @@ bool SyringeDebugger::RetrieveInfo(std::string_view const filename)
 				}
 			}
 		}
+	} catch(...) {
+		Log::WriteLine(
+			"SyringeDebugger::RetrieveInfo: Failed to open the executable!");
 
-		if(!pImGetProcAddress || !pImLoadLibrary) {
-			if(!GetLastError()) {
-				SetLastError(ERROR_PROC_NOT_FOUND);
-			}
+		throw;
+	}
 
-			Log::WriteLine("SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a GetProcAddress import could not be found!");
-			return false;
-		}
-	} else {
-		Log::WriteLine("SyringeDebugger::RetrieveInfo: Failed to open the executable!");
-		return false;
+	if(!pImGetProcAddress || !pImLoadLibrary) {
+		Log::WriteLine(
+			"SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a "
+			"GetProcAddress import could not be found!");
+
+		throw_lasterror_or(ERROR_PROC_NOT_FOUND, exe);
 	}
 
 	// read meta information: size and checksum
@@ -669,7 +670,8 @@ void SyringeDebugger::FindDLLs()
 
 			//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
 
-			if(PortableExecutable DLL{ fn }) {
+			try {
+				PortableExecutable DLL{ fn };
 				HookBuffer buffer;
 
 				bool canLoad = false;
@@ -701,9 +703,8 @@ void SyringeDebugger::FindDLLs()
 				} else if(!buffer.hooks.empty()) {
 					Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%.*s\"", printable(fn));
 				}
-
-			//} else {
-			//	Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%s\"", fn.c_str());
+			} catch(...) {
+				//Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%.*s\"", printable(fn));
 			}
 		}
 

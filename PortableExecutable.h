@@ -5,6 +5,7 @@
 //      WIN32_FAT_AND_STUPID
 
 #include "Handle.h"
+#include "Support.h"
 
 #include <string>
 #include <string_view>
@@ -59,18 +60,11 @@ public:
 		}
 
 		if(!this->ReadFile()) {
-			Handle.clear();
-			if(!GetLastError()) {
-				SetLastError(ERROR_BAD_EXE_FORMAT);
-			}
+			throw_lasterror_or(ERROR_BAD_EXE_FORMAT, Filename);
 		}
 	};
 
 	const char * GetFilename() const { return Filename.c_str(); }
-
-	explicit operator bool() const noexcept {
-		return Handle;
-	}
 
 	//PE
 	const IMAGE_DOS_HEADER& GetDOSHeader() const { return uDOSHeader; }
