@@ -54,14 +54,15 @@ int Run(std::string_view const arguments) {
 	}
 	catch(lasterror const& e)
 	{
-		Log::WriteLine("WinMain: %s (%d)", e.message.c_str(), e.error);
+		auto const message = replace(e.message, "%1", e.insert);
+		Log::WriteLine("WinMain: %s (%d)", message.c_str(), e.error);
 
-		auto const msg = std::string(failure) + "\n\n" + e.message;
+		auto const msg = std::string(failure) + "\n\n" + message;
 		MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
 		exit_code = e.error;
 	}
-	catch(invalid_command_arguments const& e)
+	catch(invalid_command_arguments const&)
 	{
 		MessageBoxA(
 			nullptr, "Syringe cannot be run just like that.\n\n"

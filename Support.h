@@ -53,6 +53,27 @@ inline auto get_command_line(std::string_view arguments) {
 	throw invalid_command_arguments{};
 }
 
+inline std::string replace(
+	std::string_view string, std::string_view const pattern,
+	std::string_view const substitute)
+{
+	std::string ret;
+
+	auto pos = 0u;
+	while((pos = string.find(pattern)) != std::string::npos) {
+		ret += string.substr(0, pos);
+		string.remove_prefix(pos);
+
+		if(string.size() > 1) {
+			ret += substitute;
+			string.remove_prefix(pattern.size());
+		}
+	}
+
+	ret += string;
+	return ret;
+}
+
 // returns something %.*s can format
 inline auto printable(std::string_view const string) {
 	return std::make_pair(string.size(), string.data());
