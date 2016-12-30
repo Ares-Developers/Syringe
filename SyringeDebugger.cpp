@@ -706,12 +706,14 @@ void SyringeDebugger::FindDLLs()
 	Log::WriteLine();
 }
 
-bool SyringeDebugger::ParseInjFileHooks(std::string_view const lib, HookBuffer &hooks) {
+bool SyringeDebugger::ParseInjFileHooks(
+	std::string_view const lib, HookBuffer& hooks)
+{
 	auto const inj = std::string(lib) + ".inj";
 
-	if(auto F = FileHandle(_fsopen(inj.c_str(), "r", _SH_DENYWR))) {
-		char line[0x100] = "\0";
-		while(fgets(line, 0x100, F)) {
+	if(auto const file = FileHandle(_fsopen(inj.c_str(), "r", _SH_DENYWR))) {
+		char line[0x100];
+		while(fgets(line, 0x100, file)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
 				size_t n_over = 0;
@@ -719,7 +721,10 @@ bool SyringeDebugger::ParseInjFileHooks(std::string_view const lib, HookBuffer &
 				func[0] = '\0';
 
 				// parse the line (length is optional, defaults to 0)
-				if(sscanf_s(line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) >= 2) {
+				if(sscanf_s(
+					line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength,
+					&n_over) >= 2)
+				{
 					hooks.add(eip, lib, func, n_over);
 				}
 			}
