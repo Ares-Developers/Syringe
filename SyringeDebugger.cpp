@@ -714,11 +714,12 @@ bool SyringeDebugger::ParseInjFileHooks(std::string_view const lib, HookBuffer &
 		while(fgets(line, 0x100, F)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
-				char func[MaxNameLength];
 				size_t n_over = 0;
+				char func[MaxNameLength];
+				func[0] = '\0';
 
 				// parse the line (length is optional, defaults to 0)
-				if(sscanf_s(line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) > 2) {
+				if(sscanf_s(line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength, &n_over) >= 2) {
 					hooks.add(eip, lib, func, n_over);
 				}
 			}
