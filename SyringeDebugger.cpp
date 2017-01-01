@@ -76,8 +76,8 @@ DWORD __fastcall SyringeDebugger::RelativeOffset(const void* pFrom, const void* 
 
 DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 {
-	DWORD exceptCode = dbgEvent.u.Exception.ExceptionRecord.ExceptionCode;
-	LPVOID exceptAddr = dbgEvent.u.Exception.ExceptionRecord.ExceptionAddress;
+	auto const exceptCode = dbgEvent.u.Exception.ExceptionRecord.ExceptionCode;
+	auto const exceptAddr = dbgEvent.u.Exception.ExceptionRecord.ExceptionAddress;
 
 	if(exceptCode == EXCEPTION_BREAKPOINT)
 	{
@@ -98,7 +98,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		//fix single step repetition issues
 		if(context.EFlags & 0x100)
 		{
-			BYTE buffer = INT3;
+			auto const buffer = INT3;
 			context.EFlags &= ~0x100;
 			PatchMem(threadInfo.lastBP, &buffer, 1);
 		}
@@ -178,12 +178,12 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 				for(auto& it : bpMap)
 				{
-					if(it.first && it.first != pcEntryPoint && it.second.hooks.size())
+					if(it.first && it.first != pcEntryPoint && !it.second.hooks.empty())
 					{
 						const SyringeDebugger::Hook* first = nullptr;
 
 						size_t sz = 0;
-						for(auto& hook : it.second.hooks)
+						for(auto const& hook : it.second.hooks)
 						{
 							if(hook.proc_address)
 							{
@@ -267,7 +267,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								delete dump;*/
 
 								//Patch original code
-								BYTE* p_original_code = static_cast<BYTE*>(it.first);
+								auto const p_original_code = static_cast<BYTE*>(it.first);
 
 								const auto rel2 = RelativeOffset(p_original_code + 5, base);
 								PatchMem(p_original_code, jmp, sizeof(jmp));
@@ -276,7 +276,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								//write NOPs
 								//only use the information of the first working hook, however, every hook
 								//should provide the same information to be secure
-								BYTE buffer = NOP;
+								auto const buffer = NOP;
 								for(size_t i = 5; i < first->num_overridden; ++i) {
 									PatchMem(&p_original_code[i], &buffer, 1);
 								}
