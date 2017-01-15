@@ -57,7 +57,7 @@ bool PortableExecutable::ReadFile()
 			IMAGE_IMPORT_DESCRIPTOR import_desc;
 			fread(&import_desc, sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, pFile);
 
-			if(!import_desc.Name) {
+			if(!import_desc.Characteristics) {
 				break;
 			}
 
@@ -93,17 +93,12 @@ bool PortableExecutable::ReadFile()
 		for(auto& thunk : current_import.vecThunkData)
 		{
 			thunk.Address = reinterpret_cast<DWORD>(thunk_addr++);
+			thunk.bIsOrdinal = IMAGE_SNAP_BY_ORDINAL(thunk.uThunkData.u1.Ordinal);
 
-			if(thunk.uThunkData.u1.AddressOfData & 0x80000000)
-			{
-				thunk.bIsOrdinal = true;
-				thunk.Ordinal = static_cast<int>(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFFu);
-			}
-			else
-			{
-				thunk.bIsOrdinal = false;
-
-				fseek(pFile, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF)), SEEK_SET);
+			if(thunk.bIsOrdinal) {
+				thunk.Ordinal = IMAGE_ORDINAL(thunk.uThunkData.u1.Ordinal);
+			} else {
+				fseek(pFile, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData)), SEEK_SET);
 				fread(&thunk.wWord, 2, 1, pFile);
 				fgets(name_buf, 0x100, pFile);
 				thunk.Name = name_buf;
