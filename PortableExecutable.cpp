@@ -50,62 +50,60 @@ bool PortableExecutable::ReadFile()
 
 	//Imports
 	auto const& Imports = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	size_t import_desc_count = Imports.Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
-	if(import_desc_count > 1)
-	{
-		// minus one for end of array
-		std::vector<IMAGE_IMPORT_DESCRIPTOR> import_desc(import_desc_count - 1);
+	if(Imports.Size) {
 		fseek(pFile, static_cast<long>(VirtualToRaw(Imports.VirtualAddress)), SEEK_SET);
-		fread(&import_desc[0], sizeof(IMAGE_IMPORT_DESCRIPTOR), import_desc.size(), pFile);
 
-		for(auto const& desc : import_desc)
-		{
-			// insert one, then fill in-place
-			vecImports.emplace_back();
-			auto& current_import = vecImports.back();
+		for(;;) {
+			IMAGE_IMPORT_DESCRIPTOR import_desc;
+			fread(&import_desc, sizeof(IMAGE_IMPORT_DESCRIPTOR), 1, pFile);
 
-			current_import.uDesc = desc;
-			if(!current_import.uDesc.Name) {
+			if(!import_desc.Name) {
 				break;
 			}
 
-			char name_buf[0x100];
-			fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
-			fgets(name_buf, 0x100, pFile);
+			vecImports.emplace_back();
+			vecImports.back().uDesc = import_desc;
+		}
+	}
 
-			current_import.Name = name_buf;
+	for(auto& current_import : vecImports)
+	{
+		char name_buf[0x100];
+		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
+		fgets(name_buf, 0x100, pFile);
 
-			//Thunks
-			PEThunkData current_thunk;
+		current_import.Name = name_buf;
 
-			fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.FirstThunk)), SEEK_SET);
+		//Thunks
+		PEThunkData current_thunk;
 
-			for(fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile);
-				current_thunk.uThunkData.u1.AddressOfData;
-				fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile))
+		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.FirstThunk)), SEEK_SET);
+
+		for(fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile);
+			current_thunk.uThunkData.u1.AddressOfData;
+			fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile))
+		{
+			current_import.vecThunkData.push_back(current_thunk);
+		}
+
+		auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
+		for(auto& thunk : current_import.vecThunkData)
+		{
+			thunk.Address = reinterpret_cast<DWORD>(thunk_addr++);
+
+			if(thunk.uThunkData.u1.AddressOfData & 0x80000000)
 			{
-				current_import.vecThunkData.push_back(current_thunk);
+				thunk.bIsOrdinal = true;
+				thunk.Ordinal = static_cast<int>(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFFu);
 			}
-
-			auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
-			for(auto& thunk : current_import.vecThunkData)
+			else
 			{
-				thunk.Address = reinterpret_cast<DWORD>(thunk_addr++);
+				thunk.bIsOrdinal = false;
 
-				if(thunk.uThunkData.u1.AddressOfData & 0x80000000)
-				{
-					thunk.bIsOrdinal = true;
-					thunk.Ordinal = static_cast<int>(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFFu);
-				}
-				else
-				{
-					thunk.bIsOrdinal = false;
-
-					fseek(pFile, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF)), SEEK_SET);
-					fread(&thunk.wWord, 2, 1, pFile);
-					fgets(name_buf, 0x100, pFile);
-					thunk.Name = name_buf;
-				}
+				fseek(pFile, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData & 0x7FFFFFFF)), SEEK_SET);
+				fread(&thunk.wWord, 2, 1, pFile);
+				fgets(name_buf, 0x100, pFile);
+				thunk.Name = name_buf;
 			}
 		}
 	}
