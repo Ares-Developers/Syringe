@@ -1,6 +1,5 @@
 #include "PortableExecutable.h"
 
-#include "Handle.h"
 #include "Log.h"
 
 #include <algorithm>
@@ -24,11 +23,7 @@ DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without 
 
 bool PortableExecutable::ReadFile()
 {
-	auto const pFile = Handle.get();
-
-	if(!pFile) {
-		return false;
-	}
+	auto const pFile = this->Handle.get();
 
 	//DOS Header
 	fseek(pFile, 0, SEEK_SET);
@@ -116,30 +111,32 @@ DWORD PortableExecutable::GetImageBase() const {
 bool PortableExecutable::ReadBytes(
 	DWORD const dwRawAddress, size_t const Size, void* const Dest) const
 {
-	if(auto const pFile = Handle.get()) {
-		if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
-			return (fread(Dest, Size, 1, pFile) == 1);
-		}
+	auto const pFile = this->Handle.get();
+	
+	if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
+		return (fread(Dest, Size, 1, pFile) == 1);
 	}
+
 	return false;
 }
 
 bool PortableExecutable::ReadCString(
 	DWORD const dwRawAddress, std::string& Result) const
 {
-	if(auto const pFile = Handle.get()) {
-		if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
-			constexpr size_t sz = 0x100;
-			char tmpBuf[sz];
+	auto const pFile = this->Handle.get();
 
-			tmpBuf[0] = 0;
-			if(fread(tmpBuf, 1, sz, pFile) == sz) {
-				tmpBuf[sz - 1] = 0;
-				Result.assign(tmpBuf);
-				return true;
-			}
+	if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
+		constexpr size_t sz = 0x100;
+		char tmpBuf[sz];
+
+		tmpBuf[0] = 0;
+		if(fread(tmpBuf, 1, sz, pFile) == sz) {
+			tmpBuf[sz - 1] = 0;
+			Result.assign(tmpBuf);
+			return true;
 		}
 	}
+
 	return false;
 }
 

@@ -59,7 +59,7 @@ public:
 			Handle = FileHandle(_fsopen(Filename.c_str(), "rb", _SH_DENYNO));
 		}
 
-		if(!this->ReadFile()) {
+		if(!this->Handle || !this->ReadFile()) {
 			throw_lasterror_or(ERROR_BAD_EXE_FORMAT, Filename);
 		}
 	};
