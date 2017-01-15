@@ -33,12 +33,12 @@ void SyringeDebugger::DebugProcess(std::string_view const arguments)
 	}
 }
 
-bool SyringeDebugger::PatchMem(void* address, const void* buffer, DWORD size)
+bool SyringeDebugger::PatchMem(void* address, void const* buffer, DWORD size)
 {
 	return (WriteProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) != FALSE);
 }
 
-bool SyringeDebugger::ReadMem(const void* address, void* buffer, DWORD size)
+bool SyringeDebugger::ReadMem(void const* address, void* buffer, DWORD size)
 {
 	return (ReadProcessMemory(pInfo.hProcess, address, buffer, size, nullptr) != FALSE);
 }
@@ -54,7 +54,7 @@ VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 
 bool SyringeDebugger::SetBP(void* address)
 {
-	//save overwritten code and set INT 3
+	// save overwritten code and set INT 3
 	auto& opcode = bpMap[address].original_opcode;
 
 	if(opcode == 0x00)
@@ -66,7 +66,7 @@ bool SyringeDebugger::SetBP(void* address)
 	return true;
 }
 
-DWORD __fastcall SyringeDebugger::RelativeOffset(const void* pFrom, const void* pTo)
+DWORD __fastcall SyringeDebugger::RelativeOffset(void const* pFrom, void const* pTo)
 {
 	auto const from = reinterpret_cast<DWORD>(pFrom);
 	auto const to = reinterpret_cast<DWORD>(pTo);
@@ -74,7 +74,7 @@ DWORD __fastcall SyringeDebugger::RelativeOffset(const void* pFrom, const void* 
 	return to - from;
 }
 
-DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
+DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 {
 	auto const exceptCode = dbgEvent.u.Exception.ExceptionRecord.ExceptionCode;
 	auto const exceptAddr = dbgEvent.u.Exception.ExceptionRecord.ExceptionAddress;
@@ -88,14 +88,14 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		context.ContextFlags = CONTEXT_CONTROL;
 		GetThreadContext(currentThread, &context);
 
-		//Entry BP
+		// entry breakpoint
 		if(bEntryBP)
 		{
 			bEntryBP = false;
 			return DBG_CONTINUE;
 		}
 
-		//fix single step repetition issues
+		// fix single step repetition issues
 		if(context.EFlags & 0x100)
 		{
 			auto const buffer = INT3;
@@ -103,17 +103,17 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			PatchMem(threadInfo.lastBP, &buffer, 1);
 		}
 
-		//Load DLLs and retrieve proc addresses
+		// load DLLs and retrieve proc addresses
 		if(!bDLLsLoaded)
 		{
-			//Restore
+			// restore
 			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
 
 			if(loop_LoadLibrary == v_AllHooks.end())
 				loop_LoadLibrary = v_AllHooks.begin();
 			else
 			{
-				const auto& hook = *loop_LoadLibrary;
+				auto const& hook = *loop_LoadLibrary;
 				ReadMem(pdProcAddress, &hook->proc_address, 4);
 
 				if(!hook->proc_address) {
@@ -127,7 +127,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 			if(loop_LoadLibrary != v_AllHooks.end())
 			{
-				const auto& hook = *loop_LoadLibrary;
+				auto const& hook = *loop_LoadLibrary;
 				PatchMem(pdLibName, hook->lib, MaxNameLength);
 				PatchMem(pdProcName, hook->proc, MaxNameLength);
 
@@ -141,7 +141,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				context.Eip = reinterpret_cast<DWORD>(pcEntryPoint);
 			}
 
-			//single step mode
+			// single step mode
 			context.EFlags |= 0x100;
 			context.ContextFlags = CONTEXT_CONTROL;
 			SetThreadContext(currentThread, &context);
@@ -157,22 +157,22 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			{
 				Log::WriteLine("SyringeDebugger::HandleException: Creating code hooks.");
 
-				static const BYTE code_call[] =
+				static BYTE const code_call[] =
 				{
-					0x60, 0x9C, //PUSHAD, PUSHFD
-					0x68, INIT, INIT, INIT, INIT, //PUSH HookAddress
-					0x54, //PUSH ESP
-					0xE8, INIT, INIT, INIT, INIT, //CALL ProcAddress
-					0x83, 0xC4, 0x08, //ADD ESP, 8
-					0xA3, INIT, INIT, INIT, INIT, //MOV ds:ReturnEIP, EAX
-					0x9D, 0x61, //POPFD, POPAD
-					0x83, 0x3D, INIT, INIT, INIT, INIT, 0x00, //CMP ds:ReturnEIP, 0
-					0x74, 0x06, //JZ .proceed
-					0xFF, 0x25, INIT, INIT, INIT, INIT, //JMP ds:ReturnEIP
+					0x60, 0x9C, // PUSHAD, PUSHFD
+					0x68, INIT, INIT, INIT, INIT, // PUSH HookAddress
+					0x54, // PUSH ESP
+					0xE8, INIT, INIT, INIT, INIT, // CALL ProcAddress
+					0x83, 0xC4, 0x08, // ADD ESP, 8
+					0xA3, INIT, INIT, INIT, INIT, // MOV ds:ReturnEIP, EAX
+					0x9D, 0x61, // POPFD, POPAD
+					0x83, 0x3D, INIT, INIT, INIT, INIT, 0x00, // CMP ds:ReturnEIP, 0
+					0x74, 0x06, // JZ .proceed
+					0xFF, 0x25, INIT, INIT, INIT, INIT, // JMP ds:ReturnEIP
 				};
 
-				static const BYTE jmp_back[] = {0xE9, INIT, INIT, INIT, INIT, };
-				static const BYTE jmp[] = {0xE9, INIT, INIT, INIT, INIT, };
+				static BYTE const jmp_back[] = { 0xE9, INIT, INIT, INIT, INIT };
+				static BYTE const jmp[] = { 0xE9, INIT, INIT, INIT, INIT };
 
 				std::vector<BYTE> over;
 
@@ -180,7 +180,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				{
 					if(it.first && it.first != pcEntryPoint && !it.second.hooks.empty())
 					{
-						const SyringeDebugger::Hook* first = nullptr;
+						SyringeDebugger::Hook const* first = nullptr;
 
 						size_t sz = 0;
 						for(auto const& hook : it.second.hooks)
@@ -199,8 +199,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 						{
 							sz += sizeof(jmp_back);
 
-							//only use the information of the first working hook, however, every hook
-							//should provide the same information to be secure
+							// only use the information of the first working hook, however, every hook
+							// should provide the same information to be secure
 							sz += first->num_overridden;
 
 							if(auto p_code_base = AllocMem(nullptr, sz))
@@ -208,28 +208,28 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 								BYTE* const base = p_code_base;
 								BYTE* p_code = base;
 
-								//Write Caller Code
+								// write caller code
 								it.second.p_caller_code = std::move(p_code_base);
-								for(const auto& hook : it.second.hooks)
+								for(auto const& hook : it.second.hooks)
 								{
 									if(hook.proc_address)
 									{
-										PatchMem(p_code, code_call, sizeof(code_call));	//code
-										PatchMem(p_code + 0x03, &it.first, 4); //PUSH HookAddress
+										PatchMem(p_code, code_call, sizeof(code_call));	// code
+										PatchMem(p_code + 0x03, &it.first, 4); // PUSH HookAddress
 
-										const auto rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
-										PatchMem(p_code + 0x09, &rel, 4); //CALL
-										PatchMem(p_code + 0x11, &pdReturnEIP, 4); //MOV
-										PatchMem(p_code + 0x19, &pdReturnEIP, 4); //CMP
-										PatchMem(p_code + 0x22, &pdReturnEIP, 4); //JMP ds:ReturnEIP
+										auto const rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
+										PatchMem(p_code + 0x09, &rel, 4); // CALL
+										PatchMem(p_code + 0x11, &pdReturnEIP, 4); // MOV
+										PatchMem(p_code + 0x19, &pdReturnEIP, 4); // CMP
+										PatchMem(p_code + 0x22, &pdReturnEIP, 4); // JMP ds:ReturnEIP
 
 										p_code += sizeof(code_call);
 									}
 								}
-								
-								//Write overridden bytes
-								//only use the information of the first working hook, however, every hook
-								//should provide the same information to be secure
+
+								// write overridden bytes
+								// only use the information of the first working hook, however, every hook
+								// should provide the same information to be secure
 								if(auto const overridden = first->num_overridden)
 								{
 									over.resize(overridden);
@@ -239,12 +239,12 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 									p_code += overridden;
 								}
 
-								//Write the jump back
-								const auto rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
+								// write the jump back
+								auto const rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
 								PatchMem(p_code, jmp_back, sizeof(jmp_back));
 								PatchMem(p_code + 0x01, &rel, 4);
 
-								//Dump
+								// dump
 								/*
 								Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
@@ -266,16 +266,16 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 								delete dump;*/
 
-								//Patch original code
+								// patch original code
 								auto const p_original_code = static_cast<BYTE*>(it.first);
 
-								const auto rel2 = RelativeOffset(p_original_code + 5, base);
+								auto const rel2 = RelativeOffset(p_original_code + 5, base);
 								PatchMem(p_original_code, jmp, sizeof(jmp));
 								PatchMem(p_original_code + 0x01, &rel2, 4);
 
-								//write NOPs
-								//only use the information of the first working hook, however, every hook
-								//should provide the same information to be secure
+								// write NOPs
+								// only use the information of the first working hook, however, every hook
+								// should provide the same information to be secure
 								auto const buffer = NOP;
 								for(size_t i = 5; i < first->num_overridden; ++i) {
 									PatchMem(&p_original_code[i], &buffer, 1);
@@ -288,10 +288,10 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 				bHooksCreated = true;
 			}
 
-			//Restore
+			// restore
 			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
 
-			//single step mode
+			// single step mode
 			context.EFlags |= 0x100;
 			--context.Eip;
 
@@ -304,7 +304,7 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 		} 
 		else
 		{
-			//could be a Debugger class breakpoint to call a patching function!
+			// could be a Debugger class breakpoint to call a patching function!
 
 			context.ContextFlags = CONTEXT_CONTROL;
 			SetThreadContext(currentThread, &context);
@@ -314,8 +314,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 	}
 	else if(exceptCode == EXCEPTION_SINGLE_STEP)
 	{
-		BYTE buffer = INT3;
-		const auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+		auto const buffer = INT3;
+		auto const& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
 		PatchMem(threadInfo.lastBP, &buffer, 1);
 
 		HANDLE hThread = threadInfo.Thread;
@@ -337,12 +337,12 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 
 		if(!bAVLogged)
 		{
-			//Log::WriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!",exceptAddr);
-			const auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+			//Log::WriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!", exceptAddr);
+			auto const& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
 			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
 
-			const char* access = nullptr;
+			char const* access = nullptr;
 			switch(dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[0])
 			{
 			case 0: access = "read from"; break;
@@ -405,8 +405,8 @@ DWORD SyringeDebugger::HandleException(const DEBUG_EVENT& dbgEvent)
 			MINIDUMP_TYPE type = (MINIDUMP_TYPE)MiniDumpWithFullMemory;
 
 			MiniDumpWriteDump(pInfo.hProcess, dbgEvent.dwProcessId, dumpFile, type, &expParam, nullptr, nullptr);
-			CloseHandle(dumpFile); 
-				
+			CloseHandle(dumpFile);
+
 			Log::WriteLine("Crash dump generated.\n");
 #endif
 
@@ -435,7 +435,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	Log::WriteLine("SyringeDebugger::Run: Setting addresses...");
 
-	//set addresses
+	// set addresses
 	pdData = pAlloc + 0x100;
 
 	pdProcAddress = pdData;
@@ -444,25 +444,25 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	pdRegisters = pdData + 0x0C;
 	pdBuffer = pdData + 0x34;
 
-	//only needed at start
+	// only needed at start
 	pdLibName = pdData + 4;
 	pdProcName = pdData + 4 + MaxNameLength;
 
 	Log::WriteLine("SyringeDebugger::Run: Writing DLL loader & caller code...");
 
-	//write DLL loader code
+	// write DLL loader code
 	pcLoadLibraryEnd = pAlloc;
 	pcLoadLibrary = pAlloc + 1;
 
-	static const BYTE cLoadLibrary[] = {
+	static BYTE const cLoadLibrary[] = {
 		0x90, // NOP
 		0x50, // push eax
 		0x51, // push ecx
 		0x52, // push edx
-		0x68, INIT, INIT, INIT, INIT, //push offset pdLibName
+		0x68, INIT, INIT, INIT, INIT, // push offset pdLibName
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pImLoadLibrary
 		0x85, 0xC0, // test eax, eax
-		0x74, 0x15, //jnz
+		0x74, 0x15, // jnz
 		0x68, INIT, INIT, INIT, INIT, // push offset pdProcName
 		0x50, // push eax
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pdImGetProcAddress
@@ -484,7 +484,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	Log::WriteLine("SyringeDebugger::Run: pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
-	//breakpoints for DLL loading and proc address retrieving
+	// breakpoints for DLL loading and proc address retrieving
 	bDLLsLoaded = false;
 	bHooksCreated = false;
 	loop_LoadLibrary = v_AllHooks.end();
@@ -492,7 +492,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	bpMap[pcEntryPoint].original_opcode = 0x00;
 	bpMap[pcLoadLibraryEnd].original_opcode = 0x00;
 
-	//set breakpoints
+	// set breakpoints
 	SetBP(pcEntryPoint);
 	SetBP(pcLoadLibraryEnd);
 
@@ -563,9 +563,9 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	Log::WriteLine();
 }
 
-void SyringeDebugger::RemoveBP(LPVOID address, bool restoreOpcode)
+void SyringeDebugger::RemoveBP(LPVOID const address, bool const restoreOpcode)
 {
-	auto i = bpMap.find(address);
+	auto const i = bpMap.find(address);
 	if(i != bpMap.end())
 	{
 		if(restoreOpcode) {
@@ -582,21 +582,21 @@ void SyringeDebugger::RetrieveInfo()
 
 	try {
 		PortableExecutable pe{ exe };
-		DWORD dwImageBase = pe.GetImageBase();
+		auto const dwImageBase = pe.GetImageBase();
 
-		//Creation time stamp
+		// creation time stamp
 		dwTimeStamp = pe.GetPEHeader().FileHeader.TimeDateStamp;
 
-		//Entry point
+		// entry point
 		pcEntryPoint = reinterpret_cast<void*>(dwImageBase + pe.GetPEHeader().OptionalHeader.AddressOfEntryPoint);
 
-		//Get Imports
+		// get imports
 		pImLoadLibrary = nullptr;
 		pImGetProcAddress = nullptr;
 
-		for(const auto& import : pe.GetImports()) {
+		for(auto const& import : pe.GetImports()) {
 			if(_strcmpi(import.Name.c_str(), "KERNEL32.DLL") == 0) {
-				for(const auto& thunk : import.vecThunkData) {
+				for(auto const& thunk : import.vecThunkData) {
 					if(_strcmpi(thunk.Name.c_str(), "GETPROCADDRESS") == 0) {
 						pImGetProcAddress = reinterpret_cast<void*>(dwImageBase + thunk.Address);
 					} else if(_strcmpi(thunk.Name.c_str(), "LOADLIBRARYA") == 0) {
@@ -654,7 +654,7 @@ void SyringeDebugger::FindDLLs()
 	for(auto file = FindFile("*.dll"); file; ++file) {
 		std::string_view fn(file->cFileName);
 
-		//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%s\"", fn.c_str());
+		//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%.*s\"", printable(fn));
 
 		try {
 			PortableExecutable DLL{ fn };
@@ -678,10 +678,10 @@ void SyringeDebugger::FindDLLs()
 			}
 
 			if(canLoad) {
-				for(const auto& it : buffer.hooks)
+				for(auto const& it : buffer.hooks)
 				{
-					void* eip = it.first;
-					auto &h = bpMap[eip];
+					auto const eip = it.first;
+					auto& h = bpMap[eip];
 					h.p_caller_code.clear();
 					h.original_opcode = 0x00;
 					h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
@@ -803,7 +803,7 @@ bool SyringeDebugger::ParseHooksSection(
 // the hooks aren't included. if the function is not exported, we have to
 // rely on other methods.
 bool SyringeDebugger::Handshake(
-	const char* const lib, int const hooks, unsigned int const crc, bool& outOk)
+	char const* const lib, int const hooks, unsigned int const crc, bool& outOk)
 {
 	if(auto const hLib = ModuleHandle(LoadLibrary(lib)))
 	{

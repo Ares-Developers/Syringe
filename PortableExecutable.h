@@ -19,10 +19,10 @@ struct PEThunkData
 	bool						bIsOrdinal;
 
 	DWORD						Address;
-	
+
 	//bIsOrdinal
 	int							Ordinal;
-	
+
 	//!bIsOrdinal
 	std::string					Name;
 	WORD						wWord;
@@ -41,18 +41,18 @@ class PortableExecutable
 private:
 	std::string					Filename;
 
-	//Basic PE structure;
+	// basic pe structure;
 	IMAGE_DOS_HEADER			uDOSHeader;
 	IMAGE_NT_HEADERS			uPEHeader;
 
-	//Sections
+	// sections
 	std::vector<IMAGE_SECTION_HEADER>	vecPESections;
 
-	//Imports
+	// imports
 	std::vector<PEImport>		vecImports;
 
 	FileHandle Handle;
-	
+
 public:
 	PortableExecutable(std::string_view filename) : Filename(filename) {
 		if(!Filename.empty()) {
@@ -64,24 +64,24 @@ public:
 		}
 	};
 
-	const char * GetFilename() const { return Filename.c_str(); }
+	char const* GetFilename() const { return Filename.c_str(); }
 
-	//PE
-	const IMAGE_DOS_HEADER& GetDOSHeader() const { return uDOSHeader; }
-	const IMAGE_NT_HEADERS& GetPEHeader() const { return uPEHeader; }
+	// pe
+	IMAGE_DOS_HEADER const& GetDOSHeader() const { return uDOSHeader; }
+	IMAGE_NT_HEADERS const& GetPEHeader() const { return uPEHeader; }
 
-	//Sections
-	const std::vector<IMAGE_SECTION_HEADER>& GetSections() { return vecPESections; }
-	const std::vector<PEImport>& GetImports() { return vecImports; }
+	// sections
+	std::vector<IMAGE_SECTION_HEADER> const& GetSections() { return vecPESections; }
+	std::vector<PEImport> const& GetImports() { return vecImports; }
 
-	//Helpers
+	// helpers
 	DWORD GetImageBase() const;
 
 	DWORD VirtualToRaw(DWORD dwAddress) const;
 
-	bool ReadBytes(DWORD dwRawAddress, size_t Size, void *Dest) const;
+	bool ReadBytes(DWORD dwRawAddress, size_t Size, void* Dest) const;
 
-	bool ReadCString(DWORD dwRawAddress, std::string &result) const;
+	bool ReadCString(DWORD dwRawAddress, std::string& result) const;
 
 	IMAGE_SECTION_HEADER const* FindSection(std::string_view name) const noexcept;
 

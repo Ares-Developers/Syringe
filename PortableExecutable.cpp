@@ -7,11 +7,12 @@
 
 #include <share.h>
 
-DWORD PortableExecutable::VirtualToRaw(DWORD dwAddress) const //address without the image base!
+// address without the image base!
+DWORD PortableExecutable::VirtualToRaw(DWORD const dwAddress) const
 {
-	for(const auto& uSection : vecPESections)
+	for(auto const& uSection : vecPESections)
 	{
-		DWORD dwDifference = dwAddress - uSection.VirtualAddress;
+		auto const dwDifference = dwAddress - uSection.VirtualAddress;
 
 		if(dwDifference < uSection.SizeOfRawData) {
 			return uSection.PointerToRawData + dwDifference;
@@ -25,25 +26,25 @@ bool PortableExecutable::ReadFile()
 {
 	auto const pFile = this->Handle.get();
 
-	//DOS Header
+	// dos header
 	fseek(pFile, 0, SEEK_SET);
 	fread(&uDOSHeader, sizeof(IMAGE_DOS_HEADER), 1, pFile);
 	if(uDOSHeader.e_magic != IMAGE_DOS_SIGNATURE) {
 		return false;
 	}
 
-	//PE Header
+	// pe header
 	fseek(pFile, uDOSHeader.e_lfanew, SEEK_SET);
 	fread(&uPEHeader, sizeof(IMAGE_NT_HEADERS), 1, pFile);
 	if(uPEHeader.Signature != IMAGE_NT_SIGNATURE) {
 		return false;
 	}
-	
-	//Sections
+
+	// sections
 	vecPESections.resize(uPEHeader.FileHeader.NumberOfSections);
 	fread(&vecPESections[0], sizeof(IMAGE_SECTION_HEADER), vecPESections.size(), pFile);
 
-	//Imports
+	// imports
 	auto const& Imports = uPEHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	if(Imports.Size) {
 		fseek(pFile, static_cast<long>(VirtualToRaw(Imports.VirtualAddress)), SEEK_SET);
@@ -61,15 +62,14 @@ bool PortableExecutable::ReadFile()
 		}
 	}
 
-	for(auto& current_import : vecImports)
-	{
+	for(auto& current_import : vecImports) {
 		char name_buf[0x100];
 		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
 		fgets(name_buf, 0x100, pFile);
 
 		current_import.Name = name_buf;
 
-		//Thunks
+		// thunks
 		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.FirstThunk)), SEEK_SET);
 
 		for(;;) {
@@ -85,8 +85,7 @@ bool PortableExecutable::ReadFile()
 		}
 
 		auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
-		for(auto& thunk : current_import.vecThunkData)
-		{
+		for(auto& thunk : current_import.vecThunkData) {
 			thunk.Address = reinterpret_cast<DWORD>(thunk_addr++);
 			thunk.bIsOrdinal = IMAGE_SNAP_BY_ORDINAL(thunk.uThunkData.u1.Ordinal);
 
@@ -112,7 +111,7 @@ bool PortableExecutable::ReadBytes(
 	DWORD const dwRawAddress, size_t const Size, void* const Dest) const
 {
 	auto const pFile = this->Handle.get();
-	
+
 	if(!fseek(pFile, static_cast<long>(dwRawAddress), SEEK_SET)) {
 		return (fread(Dest, Size, 1, pFile) == 1);
 	}

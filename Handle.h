@@ -70,7 +70,7 @@ struct Handle {
 		: Value(value)
 	{ }
 
-	Handle(const Handle&) = delete;
+	Handle(Handle const&) = delete;
 
 	Handle(Handle&& other) noexcept
 		: Value(other.release())
@@ -82,7 +82,7 @@ struct Handle {
 		}
 	}
 
-	Handle& operator = (const Handle&) = delete;
+	Handle& operator = (Handle const&) = delete;
 
 	Handle& operator = (Handle&& other) noexcept {
 		this->reset(other.release());
@@ -144,7 +144,7 @@ struct VirtualMemoryHandle {
 		: Value(pAllocated), Process(process)
 	{ }
 
-	VirtualMemoryHandle(const VirtualMemoryHandle&) = delete;
+	VirtualMemoryHandle(VirtualMemoryHandle const&) = delete;
 
 	VirtualMemoryHandle(VirtualMemoryHandle&& other) noexcept :
 		Value(std::exchange(other.Value, nullptr)),
@@ -157,7 +157,7 @@ struct VirtualMemoryHandle {
 		}
 	}
 
-	VirtualMemoryHandle& operator = (const VirtualMemoryHandle&) = delete;
+	VirtualMemoryHandle& operator = (VirtualMemoryHandle const&) = delete;
 
 	VirtualMemoryHandle& operator = (VirtualMemoryHandle&& other) noexcept {
 		VirtualMemoryHandle(this->Value, this->Process);

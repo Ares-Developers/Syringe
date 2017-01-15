@@ -13,5 +13,5 @@ public:
 	static void Open(char const* pFilename) noexcept;
 
 	static void WriteLine() noexcept;
-	static void WriteLine(const char* pFormat, ...) noexcept;
+	static void WriteLine(char const* pFormat, ...) noexcept;
 };

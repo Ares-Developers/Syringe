@@ -13,11 +13,11 @@
 
 class SyringeDebugger
 {
-	static const size_t MaxNameLength = 0x100u;
+	static size_t const MaxNameLength = 0x100u;
 
-	static const BYTE INIT = 0x00;
-	static const BYTE INT3 = 0xCC;	//trap to debugger interupt opcode.
-	static const BYTE NOP = 0x90;
+	static BYTE const INIT = 0x00;
+	static BYTE const INT3 = 0xCC;	// trap to debugger interrupt opcode.
+	static BYTE const NOP = 0x90;
 
 public:
 	SyringeDebugger(std::string_view filename)
@@ -26,30 +26,30 @@ public:
 		RetrieveInfo();
 	}
 
-	//Debugger
+	// debugger
 	void Run(std::string_view arguments);
-	DWORD HandleException(const DEBUG_EVENT& dbgEvent);
+	DWORD HandleException(DEBUG_EVENT const& dbgEvent);
 
-	//Breakpoints
+	// breakpoints
 	bool SetBP(void* address);
 	void RemoveBP(LPVOID address, bool restoreOpcode);
 
-	//Memory
+	// memory
 	VirtualMemoryHandle AllocMem(void* address, size_t size);
-	bool PatchMem(void* address, const void* buffer, DWORD size);
-	bool ReadMem(const void* address, void* buffer, DWORD size);
+	bool PatchMem(void* address, void const* buffer, DWORD size);
+	bool ReadMem(void const* address, void* buffer, DWORD size);
 
-	//Syringe
+	// syringe
 	void FindDLLs();
 
 private:
 	void RetrieveInfo();
 	void DebugProcess(std::string_view arguments);
 
-	//Helper Functions
-	static DWORD __fastcall RelativeOffset(const void* from, const void* to);
+	// helper Functions
+	static DWORD __fastcall RelativeOffset(void const* from, void const* to);
 
-	//ThreadInfo
+	// thread info
 	struct threadInfo
 	{
 		ThreadHandle Thread;
@@ -57,13 +57,13 @@ private:
 	};
 	std::map<DWORD, threadInfo> threadInfoMap;
 
-	//ProcessInfo
+	// process info
 	PROCESS_INFORMATION pInfo;
 
-	//Flags
+	// flags
 	bool bEntryBP{ true };
 
-	//Breakpoints
+	// breakpoints
 	struct Hook
 	{
 		char lib[MaxNameLength];
@@ -71,7 +71,6 @@ private:
 		void* proc_address;
 
 		size_t num_overridden;
-		//BYTE*		p_caller_code;
 	};
 	struct BPInfo
 	{
@@ -84,7 +83,7 @@ private:
 	std::vector<Hook*> v_AllHooks;
 	std::vector<Hook*>::iterator loop_LoadLibrary;
 
-	//Syringe
+	// syringe
 	std::string exe;
 	void* pcEntryPoint{ nullptr };
 	void* pImLoadLibrary{ nullptr };
@@ -101,7 +100,7 @@ private:
 
 	bool bAVLogged{ false };
 
-	//data addresses
+	// data addresses
 	BYTE* pdData{ nullptr };
 
 	void* pdProcAddress{ nullptr };
@@ -113,7 +112,7 @@ private:
 	void* pdLibName{ nullptr };
 	void* pdProcName{ nullptr };
 
-	//Code addresses
+	// code addresses
 	BYTE* pcLoadLibrary{ nullptr };
 	BYTE* pcLoadLibraryEnd{ nullptr };
 
@@ -122,8 +121,8 @@ private:
 		CRC32 checksum;
 		size_t count{ 0 };
 
-		void add(void* eip, Hook &hook) {
-			auto &h = hooks[eip];
+		void add(void* const eip, Hook& hook) {
+			auto& h = hooks[eip];
 			h.push_back(hook);
 
 			checksum.compute(&eip, sizeof(eip));
@@ -145,10 +144,10 @@ private:
 		}
 	};
 
-	bool ParseInjFileHooks(std::string_view lib, HookBuffer &hooks);
-	bool CanHostDLL(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hosts) const;
-	bool ParseHooksSection(const PortableExecutable &DLL, const IMAGE_SECTION_HEADER &hooks, HookBuffer &buffer);
-	bool Handshake(const char* lib, int hooks, unsigned int crc, bool &outOk);
+	bool ParseInjFileHooks(std::string_view lib, HookBuffer& hooks);
+	bool CanHostDLL(PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hosts) const;
+	bool ParseHooksSection(PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hooks, HookBuffer& buffer);
+	bool Handshake(char const* lib, int hooks, unsigned int crc, bool& outOk);
 };
 
 struct alignas(16) hookdecl {

@@ -41,7 +41,7 @@ void Log::WriteLine() noexcept
 	}
 }
 
-void Log::WriteLine(const char* const pFormat, ...) noexcept
+void Log::WriteLine(char const* const pFormat, ...) noexcept
 {
 	if(File)
 	{

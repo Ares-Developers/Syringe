@@ -8,7 +8,7 @@ class FindFile {
 public:
 	FindFile() = default;
 
-	explicit FindFile(const char* fileName) noexcept
+	explicit FindFile(char const* fileName) noexcept
 		: Handle(FindFirstFile(fileName, &this->Data))
 	{ }
 
@@ -25,11 +25,11 @@ public:
 		return *this;
 	}
 
-	const WIN32_FIND_DATA* operator -> () const noexcept {
+	WIN32_FIND_DATA const* operator -> () const noexcept {
 		return &this->Data;
 	}
 
-	const WIN32_FIND_DATA& operator * () const noexcept {
+	WIN32_FIND_DATA const& operator * () const noexcept {
 		return this->Data;
 	}
 
