@@ -75,15 +75,18 @@ bool PortableExecutable::ReadFile()
 		current_import.Name = name_buf;
 
 		//Thunks
-		PEThunkData current_thunk;
-
 		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.FirstThunk)), SEEK_SET);
 
-		for(fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile);
-			current_thunk.uThunkData.u1.AddressOfData;
-			fread(&current_thunk.uThunkData.u1, sizeof(IMAGE_THUNK_DATA), 1, pFile))
-		{
-			current_import.vecThunkData.push_back(current_thunk);
+		for(;;) {
+			IMAGE_THUNK_DATA thunk_data;
+			fread(&thunk_data, sizeof(IMAGE_THUNK_DATA), 1, pFile);
+
+			if(!thunk_data.u1.AddressOfData) {
+				break;
+			}
+
+			current_import.vecThunkData.emplace_back();
+			current_import.vecThunkData.back().uThunkData = thunk_data;
 		}
 
 		auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
