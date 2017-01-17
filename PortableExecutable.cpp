@@ -8,7 +8,7 @@
 #include <share.h>
 
 // address without the image base!
-DWORD PortableExecutable::VirtualToRaw(DWORD const dwAddress) const
+DWORD PortableExecutable::VirtualToRaw(DWORD const dwAddress) const noexcept
 {
 	for(auto const& uSection : vecPESections)
 	{
@@ -103,12 +103,8 @@ bool PortableExecutable::ReadFile()
 	return true;
 }
 
-DWORD PortableExecutable::GetImageBase() const {
-	return this->GetPEHeader().OptionalHeader.ImageBase;
-}
-
 bool PortableExecutable::ReadBytes(
-	DWORD const dwRawAddress, size_t const Size, void* const Dest) const
+	DWORD const dwRawAddress, size_t const Size, void* const Dest) const noexcept
 {
 	auto const pFile = this->Handle.get();
 

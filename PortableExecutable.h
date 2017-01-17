@@ -64,26 +64,41 @@ public:
 		}
 	};
 
-	char const* GetFilename() const { return Filename.c_str(); }
+	auto GetFilename() const noexcept {
+		return Filename.c_str();
+	}
 
 	// pe
-	IMAGE_DOS_HEADER const& GetDOSHeader() const { return uDOSHeader; }
-	IMAGE_NT_HEADERS const& GetPEHeader() const { return uPEHeader; }
+	auto const& GetDOSHeader() const noexcept {
+		return uDOSHeader;
+	}
+
+	auto const& GetPEHeader() const noexcept {
+		return uPEHeader;
+	}
 
 	// sections
-	std::vector<IMAGE_SECTION_HEADER> const& GetSections() { return vecPESections; }
-	std::vector<PEImport> const& GetImports() { return vecImports; }
+	auto const& GetSections() const noexcept {
+		return vecPESections;
+	}
+
+	auto const& GetImports() const noexcept {
+		return vecImports;
+	}
 
 	// helpers
-	DWORD GetImageBase() const;
+	auto const& GetImageBase() const noexcept {
+		return this->GetPEHeader().OptionalHeader.ImageBase;
+	}
 
-	DWORD VirtualToRaw(DWORD dwAddress) const;
+	DWORD VirtualToRaw(DWORD dwAddress) const noexcept;
 
-	bool ReadBytes(DWORD dwRawAddress, size_t Size, void* Dest) const;
+	bool ReadBytes(DWORD dwRawAddress, size_t Size, void* Dest) const noexcept;
 
 	bool ReadCString(DWORD dwRawAddress, std::string& result) const;
 
-	IMAGE_SECTION_HEADER const* FindSection(std::string_view name) const noexcept;
+	IMAGE_SECTION_HEADER const* FindSection(
+		std::string_view name) const noexcept;
 
 private:
 	bool ReadFile();
