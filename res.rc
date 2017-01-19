@@ -44,7 +44,7 @@ BEGIN
             VALUE "FileDescription", "Syringe Main Executable"
             VALUE "FileVersion", "0, 7, 0, 6"
             VALUE "InternalName", "Syringe"
-            VALUE "LegalCopyright", "Copyright © 2008 Patrick Dinklage"
+            VALUE "LegalCopyright", "Copyright © 2008 - 2017 Patrick Dinklage, DCoder, and AlexB"
             VALUE "OriginalFilename", "Syringe.exe"
             VALUE "ProductName", "Syringe"
             VALUE "ProductVersion", "0, 7, 0, 6"
