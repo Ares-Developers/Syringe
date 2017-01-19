@@ -150,6 +150,9 @@ private:
 	bool Handshake(char const* lib, int hooks, unsigned int crc, bool& outOk);
 };
 
+// disable "structures padded due to alignment specifier"
+#pragma warning(push)
+#pragma warning(disable : 4324)
 struct alignas(16) hookdecl {
 	unsigned int hookAddr;
 	unsigned int hookSize;
@@ -160,6 +163,10 @@ struct alignas(16) hostdecl {
 	unsigned int hostChecksum;
 	DWORD hostNamePtr;
 };
+
+static_assert(sizeof(hookdecl) == 16);
+static_assert(sizeof(hostdecl) == 16);
+#pragma warning(pop)
 
 struct SyringeHandshakeInfo
 {
