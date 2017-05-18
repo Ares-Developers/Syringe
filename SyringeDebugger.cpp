@@ -559,7 +559,9 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	CloseHandle(pInfo.hProcess);
 
-	Log::WriteLine("SyringeDebugger::Run: Done with exit code %u.", exit_code);
+	Log::WriteLine(
+		"SyringeDebugger::Run: Done with exit code %X (%u).", exit_code,
+		exit_code);
 	Log::WriteLine();
 }
 
