@@ -807,12 +807,13 @@ bool SyringeDebugger::ParseHooksSection(
 bool SyringeDebugger::Handshake(
 	char const* const lib, int const hooks, unsigned int const crc, bool& outOk)
 {
-	if(auto const hLib = ModuleHandle(LoadLibrary(lib)))
-	{
-		if(auto const hProc = GetProcAddress(hLib, "SyringeHandshake"))
+	if(auto const hLib = ModuleHandle(LoadLibrary(lib))) {
+		if(auto const func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(
+			GetProcAddress(hLib, "SyringeHandshake")))
 		{
-			Log::WriteLine("SyringeDebugger::Handshake: Calling \"%s\" ...", lib);
-			std::vector<char> buffer(0x101); // one more than we tell the dll
+			Log::WriteLine(__FUNCTION__ ": Calling \"%s\" ...", lib);
+			constexpr auto Size = 0x100u;
+			std::vector<char> buffer(Size + 1); // one more than we tell the dll
 
 			auto const shInfo = std::make_unique<SyringeHandshakeInfo>();
 			memset(shInfo.get(), 0, sizeof(SyringeHandshakeInfo));
@@ -820,26 +821,19 @@ bool SyringeDebugger::Handshake(
 			shInfo->num_hooks = hooks;
 			shInfo->checksum = crc;
 			shInfo->exeFilesize = dwExeSize;
-			shInfo->exeCRC = dwExeCRC;
 			shInfo->exeTimestamp = dwTimeStamp;
+			shInfo->exeCRC = dwExeCRC;
+			shInfo->cchMessage = static_cast<int>(Size);
 			shInfo->Message = buffer.data();
-			shInfo->cchMessage = static_cast<int>(buffer.size()) - 1;
 
-			auto const func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(hProc);
-			auto const res = func(shInfo.get());
-
-			if(SUCCEEDED(res))
-			{
+			if(auto const res = func(shInfo.get()); SUCCEEDED(res)) {
 				buffer.back() = 0;
 				Log::WriteLine(
-					"SyringeDebugger::Handshake: Answers \"%s\" (%X)",
-					buffer.data(), res);
+					__FUNCTION__ ": Answers \"%s\" (%X)", buffer.data(), res);
 				outOk = (res == S_OK);
-			}
-			else
-			{
+			} else {
 				// don't use any properties of shInfo.
-				Log::WriteLine("SyringeDebugger::Handshake: Failed (%X)", res);
+				Log::WriteLine(__FUNCTION__ ": Failed (%X)", res);
 				outOk = false;
 			}
 
