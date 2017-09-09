@@ -57,8 +57,7 @@ bool PortableExecutable::ReadFile()
 				break;
 			}
 
-			vecImports.emplace_back();
-			vecImports.back().uDesc = import_desc;
+			vecImports.emplace_back().uDesc = import_desc;
 		}
 	}
 
@@ -80,8 +79,7 @@ bool PortableExecutable::ReadFile()
 				break;
 			}
 
-			current_import.vecThunkData.emplace_back();
-			current_import.vecThunkData.back().uThunkData = thunk_data;
+			current_import.vecThunkData.emplace_back().uThunkData = thunk_data;
 		}
 
 		auto thunk_addr = reinterpret_cast<IMAGE_THUNK_DATA*>(current_import.uDesc.FirstThunk);
