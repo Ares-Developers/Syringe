@@ -1,38 +1,30 @@
 #include "CRC32.h"
 
 #include <array>
-#include <utility>
 
-template <unsigned int C, unsigned int K = 8u>
-struct crc32_polynomial // bit-reverse 0x04C11DB7U;
-	: crc32_polynomial<((C & 1u) ? 0xEDB88320u : 0u) ^ (C >> 1u), K - 1u>
-{ };
+constexpr auto create_crc_table() noexcept {
+	std::array<unsigned int, 256> ret{};
 
-template <unsigned int C>
-struct crc32_polynomial<C, 0u>
-	: std::integral_constant<unsigned int, C>
-{ };
+	for(auto i = 0u; i < 256u; ++i) {
+		auto value = i;
 
-template <unsigned int Index>
-constexpr auto crc32_polynomial_v = crc32_polynomial<Index>::value;
+		for(auto j = 8u; j; --j) {
+			// bit-reverse 0x04C11DB7U;
+			auto const polynomial = (value & 1u) ? 0xEDB88320u : 0u;
+			value = (value >> 1u) ^ polynomial;
+		}
 
-template <size_t... Indexes>
-constexpr auto IndexesToPolynomial(std::index_sequence<Indexes...>) {
-	return std::integer_sequence<
-		unsigned int, crc32_polynomial<Indexes>::value...>{};
+		ret[i] = value;
+	}
+
+	return ret;
 }
-
-template <typename T, size_t... Values>
-constexpr auto SequenceToArray(std::integer_sequence<T, Values...>) {
-	return std::array<T const, sizeof...(Values)>{ Values... };
-}
-
-constexpr auto const crc_table = SequenceToArray(
-	IndexesToPolynomial(std::make_index_sequence<256>()));
 
 unsigned int CRC32::compute(
 	void const* const buffer, long long const length) noexcept
 {
+	static constexpr auto const crc_table = create_crc_table();
+
 	auto const data = static_cast<unsigned char const*>(buffer);
 
 	for(auto i = data; i < &data[length]; ++i)
