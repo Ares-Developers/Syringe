@@ -9,16 +9,14 @@ FileHandle Log::File;
 
 void Log::Open(char const* const pFilename) noexcept
 {
-	if(pFilename && *pFilename)
-	{
+	if(pFilename && *pFilename) {
 		File = FileHandle(_fsopen(pFilename, "w", _SH_DENYWR));
 	}
 }
 
 void Log::WriteTimestamp() noexcept
 {
-	if(File)
-	{
+	if(File) {
 		time_t raw;
 		time(&raw);
 
@@ -33,8 +31,7 @@ void Log::WriteTimestamp() noexcept
 
 void Log::WriteLine() noexcept
 {
-	if(File)
-	{
+	if(File) {
 		fputs("\n", File);
 		fflush(File);
 		fseek(File, 0, SEEK_END);
@@ -43,8 +40,7 @@ void Log::WriteLine() noexcept
 
 void Log::WriteLine(char const* const pFormat, ...) noexcept
 {
-	if(File)
-	{
+	if(File) {
 		va_list args;
 		va_start(args, pFormat);
 
