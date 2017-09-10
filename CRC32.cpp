@@ -29,8 +29,8 @@ unsigned int CRC32::compute(
 
 	for(auto i = data; i < &data[length]; ++i)
 	{
-		auto const index = static_cast<unsigned char>((_value & 0xFF) ^ *i);
-		_value = (_value >> 8) ^ crc_table[index];
+		auto const index = static_cast<unsigned char>((_value & 0xFFu) ^ *i);
+		_value = (_value >> 8u) ^ crc_table[index];
 	}
 
 	return ~_value;

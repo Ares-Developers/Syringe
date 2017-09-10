@@ -45,24 +45,22 @@ bool SyringeDebugger::ReadMem(void const* address, void* buffer, DWORD size)
 
 VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 {
-	VirtualMemoryHandle res(pInfo.hProcess, address, size);
-	if(!res) {
-		throw_lasterror_or(ERROR_ERRORS_ENCOUNTERED, exe);
+	if(VirtualMemoryHandle res{ pInfo.hProcess, address, size }) {
+		return res;
 	}
-	return res;
+
+	throw_lasterror_or(ERROR_ERRORS_ENCOUNTERED, exe);
 }
 
 bool SyringeDebugger::SetBP(void* address)
 {
 	// save overwritten code and set INT 3
-	auto& opcode = bpMap[address].original_opcode;
-
-	if(opcode == 0x00)
-	{
-		BYTE buffer = INT3;
+	if(auto& opcode = bpMap[address].original_opcode; opcode == 0x00) {
+		auto const buffer = INT3;
 		ReadMem(address, &opcode, 1);
 		return PatchMem(address, &buffer, 1);
 	}
+
 	return true;
 }
 
@@ -567,9 +565,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 void SyringeDebugger::RemoveBP(LPVOID const address, bool const restoreOpcode)
 {
-	auto const i = bpMap.find(address);
-	if(i != bpMap.end())
-	{
+	if(auto const i = bpMap.find(address); i != bpMap.end()) {
 		if(restoreOpcode) {
 			PatchMem(address, &i->second.original_opcode, 1);
 		}
@@ -662,8 +658,8 @@ void SyringeDebugger::FindDLLs()
 			PortableExecutable DLL{ fn };
 			HookBuffer buffer;
 
-			bool canLoad = false;
-			if(auto hooks = DLL.FindSection(".syhks00")) {
+			auto canLoad = false;
+			if(auto const hooks = DLL.FindSection(".syhks00")) {
 				canLoad = ParseHooksSection(DLL, *hooks, buffer);
 			} else {
 				canLoad = ParseInjFileHooks(fn, buffer);
@@ -717,8 +713,9 @@ bool SyringeDebugger::ParseInjFileHooks(
 	auto const inj = std::string(lib) + ".inj";
 
 	if(auto const file = FileHandle(_fsopen(inj.c_str(), "r", _SH_DENYWR))) {
-		char line[0x100];
-		while(fgets(line, 0x100, file)) {
+		constexpr auto Size = 0x100;
+		char line[Size];
+		while(fgets(line, Size, file)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
 				size_t n_over = 0;

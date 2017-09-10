@@ -62,9 +62,10 @@ bool PortableExecutable::ReadFile()
 	}
 
 	for(auto& current_import : vecImports) {
-		char name_buf[0x100];
+		constexpr auto Size = 0x100;
+		char name_buf[Size];
 		fseek(pFile, static_cast<long>(VirtualToRaw(current_import.uDesc.Name)), SEEK_SET);
-		fgets(name_buf, 0x100, pFile);
+		fgets(name_buf, Size, pFile);
 
 		current_import.Name = name_buf;
 
@@ -92,7 +93,7 @@ bool PortableExecutable::ReadFile()
 			} else {
 				fseek(pFile, static_cast<long>(VirtualToRaw(thunk.uThunkData.u1.AddressOfData)), SEEK_SET);
 				fread(&thunk.wWord, 2, 1, pFile);
-				fgets(name_buf, 0x100, pFile);
+				fgets(name_buf, Size, pFile);
 				thunk.Name = name_buf;
 			}
 		}
