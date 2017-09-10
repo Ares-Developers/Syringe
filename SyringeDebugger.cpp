@@ -116,8 +116,8 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 				if(!hook->proc_address) {
 					Log::WriteLine(
-						"SyringeDebugger::HandleException: Could not retrieve ProcAddress for: %s - %s",
-						hook->lib, hook->proc);
+						__FUNCTION__ ": Could not retrieve ProcAddress for: %s "
+						"- %s", hook->lib, hook->proc);
 				}
 
 				++loop_LoadLibrary;
@@ -133,7 +133,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			}
 			else
 			{
-				Log::WriteLine("SyringeDebugger::HandleException: Finished retrieving proc addresses.");
+				Log::WriteLine(__FUNCTION__ ": Finished retrieving proc addresses.");
 				bDLLsLoaded = true;
 
 				context.Eip = reinterpret_cast<DWORD>(pcEntryPoint);
@@ -153,7 +153,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 		{
 			if(!bHooksCreated)
 			{
-				Log::WriteLine("SyringeDebugger::HandleException: Creating code hooks.");
+				Log::WriteLine(__FUNCTION__ ": Creating code hooks.");
 
 				static BYTE const code_call[] =
 				{
@@ -331,11 +331,13 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 	}
 	else
 	{
-		Log::WriteLine("SyringeDebugger::HandleException: Exception (Code: 0x%08X at 0x%08X)!", exceptCode, exceptAddr);
+		Log::WriteLine(
+			__FUNCTION__ ": Exception (Code: 0x%08X at 0x%08X)!", exceptCode,
+			exceptAddr);
 
 		if(!bAVLogged)
 		{
-			//Log::WriteLine("SyringeDebugger::HandleException: ACCESS VIOLATION at 0x%08X!", exceptAddr);
+			//Log::WriteLine(__FUNCTION__ ": ACCESS VIOLATION at 0x%08X!", exceptAddr);
 			auto const& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
 			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
@@ -419,19 +421,21 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 void SyringeDebugger::Run(std::string_view const arguments)
 {
-	Log::WriteLine("SyringeDebugger::Run: Running process to debug. cmd = \"%s %.*s\"", exe.c_str(), printable(arguments));
+	Log::WriteLine(
+		__FUNCTION__ ": Running process to debug. cmd = \"%s %.*s\"",
+		exe.c_str(), printable(arguments));
 	DebugProcess(arguments);
 
-	Log::WriteLine("SyringeDebugger::Run: Allocating 0x1000 bytes ...");
+	Log::WriteLine(__FUNCTION__ ": Allocating 0x1000 bytes ...");
 	pAlloc = AllocMem(nullptr, 0x1000);
 
-	Log::WriteLine("SyringeDebugger::Run: pAlloc = 0x%08X", static_cast<void*>(pAlloc));
+	Log::WriteLine(__FUNCTION__ ": pAlloc = 0x%P", static_cast<void*>(pAlloc));
 
-	Log::WriteLine("SyringeDebugger::Run: Filling allocated space with zero...");
+	Log::WriteLine(__FUNCTION__ ": Filling allocated space with zero...");
 	char zero[0x1000] = "\0";
 	PatchMem(pAlloc, zero, 0x1000);
 
-	Log::WriteLine("SyringeDebugger::Run: Setting addresses...");
+	Log::WriteLine(__FUNCTION__ ": Setting addresses...");
 
 	// set addresses
 	pdData = pAlloc + 0x100;
@@ -446,7 +450,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	pdLibName = pdData + 4;
 	pdProcName = pdData + 4 + MaxNameLength;
 
-	Log::WriteLine("SyringeDebugger::Run: Writing DLL loader & caller code...");
+	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
 
 	// write DLL loader code
 	pcLoadLibraryEnd = pAlloc;
@@ -480,7 +484,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	PatchMem(pcLoadLibraryEnd + 0x1B, &pImGetProcAddress, 4);
 	PatchMem(pcLoadLibraryEnd + 0x24, &pdProcAddress, 4);
 
-	Log::WriteLine("SyringeDebugger::Run: pcLoadLibrary = 0x%08X", pcLoadLibrary);
+	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
 	// breakpoints for DLL loading and proc address retrieving
 	bDLLsLoaded = false;
@@ -499,7 +503,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	bAVLogged = false;
 
-	Log::WriteLine("SyringeDebugger::Run: Entering debug loop...");
+	Log::WriteLine(__FUNCTION__ ": Entering debug loop...");
 
 	auto exit_code = static_cast<DWORD>(-1);
 
@@ -558,8 +562,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	CloseHandle(pInfo.hProcess);
 
 	Log::WriteLine(
-		"SyringeDebugger::Run: Done with exit code %X (%u).", exit_code,
-		exit_code);
+		__FUNCTION__ ": Done with exit code %X (%u).", exit_code, exit_code);
 	Log::WriteLine();
 }
 
@@ -576,7 +579,8 @@ void SyringeDebugger::RemoveBP(LPVOID const address, bool const restoreOpcode)
 
 void SyringeDebugger::RetrieveInfo()
 {
-	Log::WriteLine("SyringeDebugger::RetrieveInfo: Retrieving info from the executable file...");
+	Log::WriteLine(
+		__FUNCTION__ ": Retrieving info from the executable file...");
 
 	try {
 		PortableExecutable pe{ exe };
@@ -604,16 +608,15 @@ void SyringeDebugger::RetrieveInfo()
 			}
 		}
 	} catch(...) {
-		Log::WriteLine(
-			"SyringeDebugger::RetrieveInfo: Failed to open the executable!");
+		Log::WriteLine(__FUNCTION__ ": Failed to open the executable!");
 
 		throw;
 	}
 
 	if(!pImGetProcAddress || !pImLoadLibrary) {
 		Log::WriteLine(
-			"SyringeDebugger::RetrieveInfo: ERROR: Either a LoadLibraryA or a "
-			"GetProcAddress import could not be found!");
+			__FUNCTION__ ": ERROR: Either a LoadLibraryA or a GetProcAddress "
+			"import could not be found!");
 
 		throw_lasterror_or(ERROR_PROC_NOT_FOUND, exe);
 	}
@@ -632,7 +635,7 @@ void SyringeDebugger::RetrieveInfo()
 		dwExeCRC = crc.value();
 	}
 
-	Log::WriteLine("SyringeDebugger::RetrieveInfo: Executable information successfully retrieved.");
+	Log::WriteLine(__FUNCTION__ ": Executable information successfully retrieved.");
 	Log::WriteLine("\texe = %s", exe.c_str());
 	Log::WriteLine("\tpImLoadLibrary = 0x%08X", pImLoadLibrary);
 	Log::WriteLine("\tpImGetProcAddress = 0x%08X", pImGetProcAddress);
@@ -642,7 +645,7 @@ void SyringeDebugger::RetrieveInfo()
 	Log::WriteLine("\tdwTimestamp = 0x%08X", dwTimeStamp);
 	Log::WriteLine();
 
-	Log::WriteLine("SyringeDebugger::RetrieveInfo: Opening %s to determine imports.", exe.c_str());
+	Log::WriteLine(__FUNCTION__ ": Opening %s to determine imports.", exe.c_str());
 }
 
 void SyringeDebugger::FindDLLs()
@@ -703,7 +706,7 @@ void SyringeDebugger::FindDLLs()
 		}
 	}
 
-	Log::WriteLine("SyringeDebugger::FindDLLs: Done (%d hooks added).", v_AllHooks.size());
+	Log::WriteLine(__FUNCTION__ ": Done (%d hooks added).", v_AllHooks.size());
 	Log::WriteLine();
 }
 
@@ -839,7 +842,7 @@ std::optional<bool> SyringeDebugger::Handshake(
 				ret = false;
 			}
 		} else {
-			//Log::WriteLine("SyringeDebugger::Handshake: Not available.");
+			//Log::WriteLine(__FUNCTION__ ": Not available.");
 		}
 	}
 
