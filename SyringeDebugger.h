@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string_view>
 
 #include <windows.h>
@@ -147,7 +148,7 @@ private:
 	bool ParseInjFileHooks(std::string_view lib, HookBuffer& hooks);
 	bool CanHostDLL(PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hosts) const;
 	bool ParseHooksSection(PortableExecutable const& DLL, IMAGE_SECTION_HEADER const& hooks, HookBuffer& buffer);
-	bool Handshake(char const* lib, int hooks, unsigned int crc, bool& outOk);
+	std::optional<bool> Handshake(char const* lib, int hooks, unsigned int crc);
 };
 
 // disable "structures padded due to alignment specifier"

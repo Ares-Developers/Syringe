@@ -672,8 +672,11 @@ void SyringeDebugger::FindDLLs()
 			if(canLoad) {
 				Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
 
-				if(Handshake(DLL.GetFilename(), static_cast<int>(buffer.count), buffer.checksum.value(), canLoad)) {
-					// canLoad has been updated already
+				if(auto const res = Handshake(
+					DLL.GetFilename(), static_cast<int>(buffer.count),
+					buffer.checksum.value()))
+				{
+					canLoad = *res;
 				} else if(auto hosts = DLL.FindSection(".syexe00")) {
 					canLoad = CanHostDLL(DLL, *hosts);
 				}
@@ -804,9 +807,11 @@ bool SyringeDebugger::ParseHooksSection(
 // function, we initiate a handshake. if it fails, or the dll opts out,
 // the hooks aren't included. if the function is not exported, we have to
 // rely on other methods.
-bool SyringeDebugger::Handshake(
-	char const* const lib, int const hooks, unsigned int const crc, bool& outOk)
+std::optional<bool> SyringeDebugger::Handshake(
+	char const* const lib, int const hooks, unsigned int const crc)
 {
+	std::optional<bool> ret;
+
 	if(auto const hLib = ModuleHandle(LoadLibrary(lib))) {
 		if(auto const func = reinterpret_cast<SYRINGEHANDSHAKEFUNC>(
 			GetProcAddress(hLib, "SyringeHandshake")))
@@ -830,18 +835,16 @@ bool SyringeDebugger::Handshake(
 				buffer.back() = 0;
 				Log::WriteLine(
 					__FUNCTION__ ": Answers \"%s\" (%X)", buffer.data(), res);
-				outOk = (res == S_OK);
+				ret = (res == S_OK);
 			} else {
 				// don't use any properties of shInfo.
 				Log::WriteLine(__FUNCTION__ ": Failed (%X)", res);
-				outOk = false;
+				ret = false;
 			}
-
-			return true;
 		} else {
 			//Log::WriteLine("SyringeDebugger::Handshake: Not available.");
 		}
 	}
 
-	return false;
+	return ret;
 }
