@@ -24,8 +24,6 @@ void Log::WriteTimestamp() noexcept
 		localtime_s(&t, &raw);
 
 		fprintf(File, "[%02d:%02d:%02d] ", t.tm_hour, t.tm_min, t.tm_sec);
-		fflush(File);
-		fseek(File, 0, SEEK_END);
 	}
 }
 
@@ -33,8 +31,6 @@ void Log::WriteLine() noexcept
 {
 	if(File) {
 		fputs("\n", File);
-		fflush(File);
-		fseek(File, 0, SEEK_END);
 	}
 }
 
