@@ -15,9 +15,7 @@ using namespace std;
 
 void SyringeDebugger::DebugProcess(std::string_view const arguments)
 {
-	STARTUPINFO startupInfo;
-	memset(&startupInfo, 0, sizeof(startupInfo));
-	startupInfo.cb = sizeof(startupInfo);
+	STARTUPINFO startupInfo{ sizeof(startupInfo) };
 
 	SetEnvironmentVariable("_NO_DEBUG_HEAP", "1");
 
@@ -821,7 +819,6 @@ std::optional<bool> SyringeDebugger::Handshake(
 			std::vector<char> buffer(Size + 1); // one more than we tell the dll
 
 			auto const shInfo = std::make_unique<SyringeHandshakeInfo>();
-			memset(shInfo.get(), 0, sizeof(SyringeHandshakeInfo));
 			shInfo->cbSize = sizeof(SyringeHandshakeInfo);
 			shInfo->num_hooks = hooks;
 			shInfo->checksum = crc;
