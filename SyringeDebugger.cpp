@@ -653,10 +653,11 @@ void SyringeDebugger::FindDLLs()
 	for(auto file = FindFile("*.dll"); file; ++file) {
 		std::string_view fn(file->cFileName);
 
-		//Log::WriteLine(__FUNCTION__ ": Potential DLL: \"%.*s\"", printable(fn));
+		//Log::WriteLine(
+		//	__FUNCTION__ ": Potential DLL: \"%.*s\"", printable(fn));
 
 		try {
-			PortableExecutable DLL{ fn };
+			PortableExecutable const DLL{ fn };
 			HookBuffer buffer;
 
 			auto canLoad = false;
@@ -667,32 +668,36 @@ void SyringeDebugger::FindDLLs()
 			}
 
 			if(canLoad) {
-				Log::WriteLine(__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
+				Log::WriteLine(
+					__FUNCTION__ ": Recognized DLL: \"%.*s\"", printable(fn));
 
 				if(auto const res = Handshake(
 					DLL.GetFilename(), static_cast<int>(buffer.count),
 					buffer.checksum.value()))
 				{
 					canLoad = *res;
-				} else if(auto hosts = DLL.FindSection(".syexe00")) {
+				} else if(auto const hosts = DLL.FindSection(".syexe00")) {
 					canLoad = CanHostDLL(DLL, *hosts);
 				}
 			}
 
 			if(canLoad) {
-				for(auto const& it : buffer.hooks)
-				{
+				for(auto const& it : buffer.hooks) {
 					auto const eip = it.first;
 					auto& h = bpMap[eip];
 					h.p_caller_code.clear();
 					h.original_opcode = 0x00;
-					h.hooks.insert(h.hooks.end(), it.second.begin(), it.second.end());
+					h.hooks.insert(
+						h.hooks.end(), it.second.begin(), it.second.end());
 				}
 			} else if(!buffer.hooks.empty()) {
-				Log::WriteLine(__FUNCTION__ ": DLL load was prevented: \"%.*s\"", printable(fn));
+				Log::WriteLine(
+					__FUNCTION__ ": DLL load was prevented: \"%.*s\"",
+					printable(fn));
 			}
 		} catch(...) {
-			//Log::WriteLine(__FUNCTION__ ": DLL Parse failed: \"%.*s\"", printable(fn));
+			//Log::WriteLine(
+			//	__FUNCTION__ ": DLL Parse failed: \"%.*s\"", printable(fn));
 		}
 	}
 
