@@ -419,19 +419,21 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 void SyringeDebugger::Run(std::string_view const arguments)
 {
+	constexpr auto AllocDataSize = 0x1000;
+
 	Log::WriteLine(
 		__FUNCTION__ ": Running process to debug. cmd = \"%s %.*s\"",
 		exe.c_str(), printable(arguments));
 	DebugProcess(arguments);
 
-	Log::WriteLine(__FUNCTION__ ": Allocating 0x1000 bytes ...");
-	pAlloc = AllocMem(nullptr, 0x1000);
+	Log::WriteLine(__FUNCTION__ ": Allocating 0x%u bytes...", AllocDataSize);
+	pAlloc = AllocMem(nullptr, AllocDataSize);
 
 	Log::WriteLine(__FUNCTION__ ": pAlloc = 0x%08X", pAlloc.get());
 
 	Log::WriteLine(__FUNCTION__ ": Filling allocated space with zero...");
-	char zero[0x1000] = "\0";
-	PatchMem(pAlloc, zero, 0x1000);
+	char zero[AllocDataSize] = {};
+	PatchMem(pAlloc, zero, AllocDataSize);
 
 	Log::WriteLine(__FUNCTION__ ": Setting addresses...");
 
