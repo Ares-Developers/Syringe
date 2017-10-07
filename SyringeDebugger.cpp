@@ -427,7 +427,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	Log::WriteLine(__FUNCTION__ ": Allocating 0x1000 bytes ...");
 	pAlloc = AllocMem(nullptr, 0x1000);
 
-	Log::WriteLine(__FUNCTION__ ": pAlloc = 0x%P", static_cast<void*>(pAlloc));
+	Log::WriteLine(__FUNCTION__ ": pAlloc = 0x%08X", pAlloc.get());
 
 	Log::WriteLine(__FUNCTION__ ": Filling allocated space with zero...");
 	char zero[0x1000] = "\0";
