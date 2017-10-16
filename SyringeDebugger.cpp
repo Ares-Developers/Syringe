@@ -244,23 +244,18 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 								/*
 								Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
-								char dump_str[0x200] = "\0";
-								char buffer[0x10] = "\0";
-								BYTE* dump = new BYTE[sz];
+								std::vector<BYTE> dump(sz);
+								ReadMem(it.second.p_caller_code, dump.data(), sz);
 
-								ReadMem(it.second.p_caller_code, dump, sz);
-
-								strcat(dump_str, "\t\t");
-								for(unsigned int i = 0; i < sz; i++)
-								{
-									sprintf(buffer, "%02X ", dump[i]);
-									strcat(dump_str, buffer);
+								std::string dump_str{ "\t\t" };
+								for(auto const& byte : dump) {
+									char buffer[0x10];
+									sprintf(buffer, "%02X ", byte);
+									dump_str += buffer;
 								}
 
-								Log::WriteLine(dump_str);
-								Log::WriteLine();
-
-								delete dump;*/
+								Log::WriteLine(dump_str.c_str());
+								Log::WriteLine();*/
 
 								// patch original code
 								auto const p_original_code = static_cast<BYTE*>(it.first);
