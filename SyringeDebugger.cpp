@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <memory>
+#include <numeric>
 
 #include <DbgHelp.h>
 
@@ -174,103 +175,98 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 				for(auto& it : bpMap)
 				{
-					if(it.first && it.first != pcEntryPoint && !it.second.hooks.empty())
+					if(it.first == nullptr
+						|| it.first == pcEntryPoint
+						|| it.second.hooks.empty())
 					{
-						SyringeDebugger::Hook const* first = nullptr;
+						continue;
+					}
 
-						size_t sz = 0;
-						for(auto const& hook : it.second.hooks)
-						{
-							if(hook.proc_address)
-							{
-								if(!first) {
-									first = &hook;
-								}
-
-								sz += sizeof(code_call);
+					auto const [count, overridden] = std::accumulate(
+						it.second.hooks.cbegin(), it.second.hooks.cend(),
+						std::make_pair(0u, 0u), [](auto acc, auto const& hook)
+					{
+						if(hook.proc_address) {
+							if(acc.second < hook.num_overridden) {
+								acc.second = hook.num_overridden;
 							}
+							acc.first++;
 						}
+						return acc;
+					});
 
-						if(sz && first)
+					if(count)
+					{
+						auto const sz = count * sizeof(code_call)
+							+ sizeof(jmp_back) + overridden;
+
+						if(auto p_code_base = AllocMem(nullptr, sz))
 						{
-							sz += sizeof(jmp_back);
+							BYTE* const base = p_code_base;
+							BYTE* p_code = base;
 
-							// only use the information of the first working hook, however, every hook
-							// should provide the same information to be secure
-							sz += first->num_overridden;
-
-							if(auto p_code_base = AllocMem(nullptr, sz))
+							// write caller code
+							it.second.p_caller_code = std::move(p_code_base);
+							for(auto const& hook : it.second.hooks)
 							{
-								BYTE* const base = p_code_base;
-								BYTE* p_code = base;
-
-								// write caller code
-								it.second.p_caller_code = std::move(p_code_base);
-								for(auto const& hook : it.second.hooks)
+								if(hook.proc_address)
 								{
-									if(hook.proc_address)
-									{
-										PatchMem(p_code, code_call, sizeof(code_call));	// code
-										PatchMem(p_code + 0x03, &it.first, 4); // PUSH HookAddress
+									PatchMem(p_code, code_call, sizeof(code_call));	// code
+									PatchMem(p_code + 0x03, &it.first, 4); // PUSH HookAddress
 
-										auto const rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
-										PatchMem(p_code + 0x09, &rel, 4); // CALL
-										PatchMem(p_code + 0x11, &pdReturnEIP, 4); // MOV
-										PatchMem(p_code + 0x19, &pdReturnEIP, 4); // CMP
-										PatchMem(p_code + 0x22, &pdReturnEIP, 4); // JMP ds:ReturnEIP
+									auto const rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
+									PatchMem(p_code + 0x09, &rel, 4); // CALL
+									PatchMem(p_code + 0x11, &pdReturnEIP, 4); // MOV
+									PatchMem(p_code + 0x19, &pdReturnEIP, 4); // CMP
+									PatchMem(p_code + 0x22, &pdReturnEIP, 4); // JMP ds:ReturnEIP
 
-										p_code += sizeof(code_call);
-									}
+									p_code += sizeof(code_call);
 								}
+							}
 
-								// write overridden bytes
-								// only use the information of the first working hook, however, every hook
-								// should provide the same information to be secure
-								if(auto const overridden = first->num_overridden)
-								{
-									over.resize(overridden);
-									ReadMem(it.first, over.data(), overridden);
-									PatchMem(p_code, over.data(), overridden);
+							// write overridden bytes
+							if(overridden)
+							{
+								over.resize(overridden);
+								ReadMem(it.first, over.data(), overridden);
+								PatchMem(p_code, over.data(), overridden);
 
-									p_code += overridden;
-								}
+								p_code += overridden;
+							}
 
-								// write the jump back
-								auto const rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
-								PatchMem(p_code, jmp_back, sizeof(jmp_back));
-								PatchMem(p_code + 0x01, &rel, 4);
+							// write the jump back
+							auto const rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
+							PatchMem(p_code, jmp_back, sizeof(jmp_back));
+							PatchMem(p_code + 0x01, &rel, 4);
 
-								// dump
-								/*
-								Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
+							// dump
+							/*
+							Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
-								std::vector<BYTE> dump(sz);
-								ReadMem(it.second.p_caller_code, dump.data(), sz);
+							std::vector<BYTE> dump(sz);
+							ReadMem(it.second.p_caller_code, dump.data(), sz);
 
-								std::string dump_str{ "\t\t" };
-								for(auto const& byte : dump) {
-									char buffer[0x10];
-									sprintf(buffer, "%02X ", byte);
-									dump_str += buffer;
-								}
+							std::string dump_str{ "\t\t" };
+							for(auto const& byte : dump) {
+								char buffer[0x10];
+								sprintf(buffer, "%02X ", byte);
+								dump_str += buffer;
+							}
 
-								Log::WriteLine(dump_str.c_str());
-								Log::WriteLine();*/
+							Log::WriteLine(dump_str.c_str());
+							Log::WriteLine();*/
 
-								// patch original code
-								auto const p_original_code = static_cast<BYTE*>(it.first);
+							// patch original code
+							auto const p_original_code = static_cast<BYTE*>(it.first);
 
-								auto const rel2 = RelativeOffset(p_original_code + 5, base);
-								PatchMem(p_original_code, jmp, sizeof(jmp));
-								PatchMem(p_original_code + 0x01, &rel2, 4);
+							auto const rel2 = RelativeOffset(p_original_code + 5, base);
+							PatchMem(p_original_code, jmp, sizeof(jmp));
+							PatchMem(p_original_code + 0x01, &rel2, 4);
 
-								// write NOPs
-								// only use the information of the first working hook, however, every hook
-								// should provide the same information to be secure
-								auto const buffer = NOP;
-								for(size_t i = 5; i < first->num_overridden; ++i) {
-									PatchMem(&p_original_code[i], &buffer, 1);
-								}
+							// write NOPs
+							auto const buffer = NOP;
+							for(size_t i = 5; i < overridden; ++i) {
+								PatchMem(&p_original_code[i], &buffer, 1);
 							}
 						}
 					}
