@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "Support.h"
 
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <numeric>
@@ -171,14 +172,10 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 				static BYTE const jmp_back[] = { 0xE9, INIT, INIT, INIT, INIT };
 				static BYTE const jmp[] = { 0xE9, INIT, INIT, INIT, INIT };
 
-				std::vector<BYTE> over;
+				std::vector<BYTE> code;
 
-				auto const ApplyPatch = [this](void* ptr, auto&& data) {
-					PatchMem(ptr, data, sizeof(data));
-				};
-
-				auto const ApplyPatch2 = [this](void* ptr, auto&& data, size_t size) {
-					PatchMem(ptr, data, size);
+				auto const ApplyPatch = [](void* ptr, auto&& data) {
+					std::memcpy(ptr, data, sizeof(data));
 				};
 
 				for(auto& it : bpMap)
@@ -209,9 +206,11 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					auto const sz = count * sizeof(code_call)
 						+ sizeof(jmp_back) + overridden;
 
+					code.resize(sz);
+					auto p_code = code.data();
+
 					it.second.p_caller_code = AllocMem(nullptr, sz);
 					auto const base = it.second.p_caller_code.get();
-					auto p_code = base;
 
 					// write caller code
 					for(auto const& hook : it.second.hooks)
@@ -221,7 +220,8 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 							ApplyPatch(p_code, code_call); // code
 							ApplyPatch(p_code + 0x03, &it.first); // PUSH HookAddress
 
-							auto const rel = RelativeOffset(p_code + 0x0D, hook.proc_address);
+							auto const rel = RelativeOffset(
+								base + (p_code - code.data() + 0x0D), hook.proc_address);
 							ApplyPatch(p_code + 0x09, &rel); // CALL
 							ApplyPatch(p_code + 0x11, &pdReturnEIP); // MOV
 							ApplyPatch(p_code + 0x19, &pdReturnEIP); // CMP
@@ -234,27 +234,28 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					// write overridden bytes
 					if(overridden)
 					{
-						over.resize(overridden);
-						ReadMem(it.first, over.data(), overridden);
-						ApplyPatch2(p_code, over.data(), overridden);
-
+						ReadMem(it.first, p_code, overridden);
 						p_code += overridden;
 					}
 
 					// write the jump back
-					auto const rel = RelativeOffset(p_code + 0x05, static_cast<BYTE*>(it.first) + 0x05);
+					auto const rel = RelativeOffset(
+						base + (p_code - code.data() + 0x05),
+						static_cast<BYTE*>(it.first) + 0x05);
 					ApplyPatch(p_code, jmp_back);
 					ApplyPatch(p_code + 0x01, &rel);
+
+					PatchMem(base, code.data(), code.size());
 
 					// dump
 					/*
 					Log::WriteLine("Call dump for 0x%08X at 0x%08X:", it.first, base);
 
-					std::vector<BYTE> dump(sz);
-					ReadMem(it.second.p_caller_code, dump.data(), sz);
+					code.resize(sz);
+					ReadMem(it.second.p_caller_code, code.data(), sz);
 
 					std::string dump_str{ "\t\t" };
-					for(auto const& byte : dump) {
+					for(auto const& byte : code) {
 						char buffer[0x10];
 						sprintf(buffer, "%02X ", byte);
 						dump_str += buffer;
@@ -267,14 +268,11 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					auto const p_original_code = static_cast<BYTE*>(it.first);
 
 					auto const rel2 = RelativeOffset(p_original_code + 5, base);
-					ApplyPatch(p_original_code, jmp);
-					ApplyPatch(p_original_code + 0x01, &rel2);
+					code.assign(std::max(overridden, sizeof(jmp)), NOP);
+					ApplyPatch(code.data(), jmp);
+					ApplyPatch(code.data() + 0x01, &rel2);
 
-					// write NOPs
-					auto const buffer = NOP;
-					for(size_t i = 5; i < overridden; ++i) {
-						ApplyPatch(&p_original_code[i], &buffer);
-					}
+					PatchMem(p_original_code, code.data(), code.size());
 				}
 
 				bHooksCreated = true;
