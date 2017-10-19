@@ -275,6 +275,8 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					PatchMem(p_original_code, code.data(), code.size());
 				}
 
+				Log::Flush();
+
 				bHooksCreated = true;
 			}
 

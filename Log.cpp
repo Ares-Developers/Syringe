@@ -14,6 +14,13 @@ void Log::Open(char const* const pFilename) noexcept
 	}
 }
 
+void Log::Flush() noexcept
+{
+	if(File) {
+		fflush(File);
+	}
+}
+
 void Log::WriteTimestamp() noexcept
 {
 	if(File) {
