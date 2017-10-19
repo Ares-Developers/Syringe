@@ -14,11 +14,11 @@
 
 class SyringeDebugger
 {
-	static size_t const MaxNameLength = 0x100u;
+	static constexpr size_t MaxNameLength = 0x100u;
 
-	static BYTE const INIT = 0x00;
-	static BYTE const INT3 = 0xCC;	// trap to debugger interrupt opcode.
-	static BYTE const NOP = 0x90;
+	static constexpr BYTE INIT = 0x00;
+	static constexpr BYTE INT3 = 0xCC; // trap to debugger interrupt opcode.
+	static constexpr BYTE NOP = 0x90;
 
 public:
 	SyringeDebugger(std::string_view filename)
@@ -96,8 +96,6 @@ private:
 
 	bool bDLLsLoaded{ false };
 	bool bHooksCreated{ false };
-
-	void* pLastBP{ nullptr };
 
 	bool bAVLogged{ false };
 
