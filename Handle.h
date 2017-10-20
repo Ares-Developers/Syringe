@@ -119,6 +119,15 @@ struct Handle {
 		return &this->Value;
 	}
 
+	void swap(Handle& other) noexcept {
+		using std::swap;
+		swap(this->Value, other.Value);
+	}
+
+	friend void swap(Handle& lhs, Handle& rhs) noexcept {
+		lhs.swap(rhs);
+	}
+
 private:
 	value_type Value{ Traits::default_value() };
 };
@@ -160,9 +169,7 @@ struct VirtualMemoryHandle {
 	VirtualMemoryHandle& operator = (VirtualMemoryHandle const&) = delete;
 
 	VirtualMemoryHandle& operator = (VirtualMemoryHandle&& other) noexcept {
-		VirtualMemoryHandle(this->Value, this->Process);
-		this->Value = std::exchange(other.Value, nullptr);
-		this->Process = std::exchange(other.Process, nullptr);
+		VirtualMemoryHandle{ std::move(other) }.swap(*this);
 		return *this;
 	}
 
@@ -176,6 +183,16 @@ struct VirtualMemoryHandle {
 
 	void clear() noexcept {
 		VirtualMemoryHandle(std::move(*this));
+	}
+
+	void swap(VirtualMemoryHandle& other) noexcept {
+		using std::swap;
+		swap(this->Value, other.Value);
+		swap(this->Process, other.Process);
+	}
+
+	friend void swap(VirtualMemoryHandle& lhs, VirtualMemoryHandle& rhs) noexcept {
+		lhs.swap(rhs);
 	}
 
 private:
