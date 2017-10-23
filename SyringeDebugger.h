@@ -75,7 +75,7 @@ private:
 	};
 	struct BPInfo
 	{
-		BYTE original_opcode;
+		BYTE original_opcode{ 0x0u };
 		std::vector<Hook> hooks;
 		VirtualMemoryHandle p_caller_code;
 	};

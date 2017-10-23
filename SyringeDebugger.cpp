@@ -487,9 +487,6 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	bHooksCreated = false;
 	loop_LoadLibrary = v_AllHooks.end();
 
-	bpMap[pcEntryPoint].original_opcode = 0x00;
-	bpMap[pcLoadLibraryEnd].original_opcode = 0x00;
-
 	// set breakpoints
 	SetBP(pcEntryPoint);
 	SetBP(pcLoadLibraryEnd);
