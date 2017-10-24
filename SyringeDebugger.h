@@ -51,12 +51,19 @@ private:
 	static DWORD __fastcall RelativeOffset(void const* from, void const* to);
 
 	// thread info
-	struct threadInfo
+	struct ThreadInfo
 	{
+		ThreadInfo() = default;
+
+		ThreadInfo(HANDLE hThread) noexcept
+			: Thread{hThread}
+		{ }
+
 		ThreadHandle Thread;
-		LPVOID lastBP;
+		LPVOID lastBP{ nullptr };
 	};
-	std::map<DWORD, threadInfo> threadInfoMap;
+
+	std::map<DWORD, ThreadInfo> Threads;
 
 	// process info
 	PROCESS_INFORMATION pInfo;

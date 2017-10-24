@@ -79,7 +79,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 	if(exceptCode == EXCEPTION_BREAKPOINT)
 	{
-		auto& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+		auto& threadInfo = Threads[dbgEvent.dwThreadId];
 		HANDLE currentThread = threadInfo.Thread;
 		CONTEXT context;
 
@@ -307,7 +307,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 	else if(exceptCode == EXCEPTION_SINGLE_STEP)
 	{
 		auto const buffer = INT3;
-		auto const& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+		auto const& threadInfo = Threads[dbgEvent.dwThreadId];
 		PatchMem(threadInfo.lastBP, &buffer, 1);
 
 		HANDLE hThread = threadInfo.Thread;
@@ -332,7 +332,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 		if(!bAVLogged)
 		{
 			//Log::WriteLine(__FUNCTION__ ": ACCESS VIOLATION at 0x%08X!", exceptAddr);
-			auto const& threadInfo = threadInfoMap[dbgEvent.dwThreadId];
+			auto const& threadInfo = Threads[dbgEvent.dwThreadId];
 			HANDLE currentThread = threadInfo.Thread;
 			CONTEXT context;
 
@@ -514,19 +514,20 @@ void SyringeDebugger::Run(std::string_view const arguments)
 			pInfo.dwThreadId = dbgEvent.dwProcessId;
 			pInfo.hThread = dbgEvent.u.CreateProcessInfo.hThread;
 			pInfo.dwThreadId = dbgEvent.dwThreadId;
-			threadInfoMap[dbgEvent.dwThreadId].Thread = ThreadHandle(dbgEvent.u.CreateProcessInfo.hThread);
-			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
+			Threads.emplace(dbgEvent.dwThreadId, dbgEvent.u.CreateProcessInfo.hThread);
 			CloseHandle(dbgEvent.u.CreateProcessInfo.hFile);
 			break;
 
 		case CREATE_THREAD_DEBUG_EVENT:
-			threadInfoMap[dbgEvent.dwThreadId].Thread = ThreadHandle(dbgEvent.u.CreateThread.hThread);
-			threadInfoMap[dbgEvent.dwThreadId].lastBP = nullptr;
+			Threads.emplace(dbgEvent.dwThreadId, dbgEvent.u.CreateThread.hThread);
 			break;
 
 		case EXIT_THREAD_DEBUG_EVENT:
-			threadInfoMap[dbgEvent.dwThreadId].Thread.release();
-			threadInfoMap.erase(dbgEvent.dwThreadId);
+			if(auto const it = Threads.find(dbgEvent.dwThreadId); it != Threads.end())
+			{
+				it->second.Thread.release();
+				Threads.erase(it);
+			}
 			break;
 
 		case EXCEPTION_DEBUG_EVENT:
