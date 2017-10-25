@@ -141,7 +141,7 @@ using LocalAllocHandle = Handle<LocalAllocHandleTraits>;
 struct VirtualMemoryHandle {
 	VirtualMemoryHandle() noexcept = default;
 
-	VirtualMemoryHandle(HANDLE process, void* address, size_t size) noexcept
+	VirtualMemoryHandle(HANDLE process, LPVOID address, SIZE_T size) noexcept
 		: Process(process)
 	{
 		if(process && size) {
@@ -149,8 +149,8 @@ struct VirtualMemoryHandle {
 		}
 	}
 
-	VirtualMemoryHandle(void* pAllocated, HANDLE process) noexcept
-		: Value(pAllocated), Process(process)
+	VirtualMemoryHandle(LPVOID allocated, HANDLE process) noexcept
+		: Value(allocated), Process(process)
 	{ }
 
 	VirtualMemoryHandle(VirtualMemoryHandle const&) = delete;
@@ -196,6 +196,6 @@ struct VirtualMemoryHandle {
 	}
 
 private:
-	void* Value{ nullptr };
+	LPVOID Value{ nullptr };
 	HANDLE Process{ nullptr };
 };
