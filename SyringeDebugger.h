@@ -80,13 +80,15 @@ private:
 
 		size_t num_overridden;
 	};
-	struct BPInfo
+
+	struct BreakpointInfo
 	{
 		BYTE original_opcode{ 0x0u };
 		std::vector<Hook> hooks;
 		VirtualMemoryHandle p_caller_code;
 	};
-	std::map<void*, BPInfo> bpMap;
+
+	std::map<void*, BreakpointInfo> Breakpoints;
 
 	std::vector<Hook*> v_AllHooks;
 	std::vector<Hook*>::iterator loop_LoadLibrary;

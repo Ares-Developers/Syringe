@@ -55,7 +55,7 @@ VirtualMemoryHandle SyringeDebugger::AllocMem(void* address, size_t size)
 bool SyringeDebugger::SetBP(void* address)
 {
 	// save overwritten code and set INT 3
-	if(auto& opcode = bpMap[address].original_opcode; opcode == 0x00) {
+	if(auto& opcode = Breakpoints[address].original_opcode; opcode == 0x00) {
 		auto const buffer = INT3;
 		ReadMem(address, &opcode, 1);
 		return PatchMem(address, &buffer, 1);
@@ -105,7 +105,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 		if(!bDLLsLoaded)
 		{
 			// restore
-			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
+			PatchMem(exceptAddr, &Breakpoints[exceptAddr].original_opcode, 1);
 
 			if(loop_LoadLibrary == v_AllHooks.end())
 				loop_LoadLibrary = v_AllHooks.begin();
@@ -178,7 +178,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					std::memcpy(ptr, data, sizeof(data));
 				};
 
-				for(auto& it : bpMap)
+				for(auto& it : Breakpoints)
 				{
 					if(it.first == nullptr || it.first == pcEntryPoint)
 					{
@@ -281,7 +281,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			}
 
 			// restore
-			PatchMem(exceptAddr, &bpMap[exceptAddr].original_opcode, 1);
+			PatchMem(exceptAddr, &Breakpoints[exceptAddr].original_opcode, 1);
 
 			// single step mode
 			context.EFlags |= 0x100;
@@ -562,12 +562,12 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 void SyringeDebugger::RemoveBP(LPVOID const address, bool const restoreOpcode)
 {
-	if(auto const i = bpMap.find(address); i != bpMap.end()) {
+	if(auto const i = Breakpoints.find(address); i != Breakpoints.end()) {
 		if(restoreOpcode) {
 			PatchMem(address, &i->second.original_opcode, 1);
 		}
 
-		bpMap.erase(i);
+		Breakpoints.erase(i);
 	}
 }
 
@@ -644,7 +644,7 @@ void SyringeDebugger::RetrieveInfo()
 
 void SyringeDebugger::FindDLLs()
 {
-	bpMap.clear();
+	Breakpoints.clear();
 
 	for(auto file = FindFile("*.dll"); file; ++file) {
 		std::string_view fn(file->cFileName);
@@ -680,7 +680,7 @@ void SyringeDebugger::FindDLLs()
 			if(canLoad) {
 				for(auto const& it : buffer.hooks) {
 					auto const eip = it.first;
-					auto& h = bpMap[eip];
+					auto& h = Breakpoints[eip];
 					h.p_caller_code.clear();
 					h.original_opcode = 0x00;
 					h.hooks.insert(
@@ -699,7 +699,7 @@ void SyringeDebugger::FindDLLs()
 
 	// summarize all hooks
 	v_AllHooks.clear();
-	for(auto& it : bpMap) {
+	for(auto& it : Breakpoints) {
 		for(auto& i : it.second.hooks) {
 			v_AllHooks.push_back(&i);
 		}
