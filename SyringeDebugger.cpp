@@ -436,14 +436,11 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	Log::WriteLine(__FUNCTION__ ": Setting addresses...");
 
 	// set addresses
-	pdData = pAlloc + 0x100;
-
-	pdProcAddress = pdData;
-	pdReturnEIP = pdData + 0x08;
-
-	// only needed at start
-	pdLibName = pdData + 4;
-	pdProcName = pdData + 4 + MaxNameLength;
+	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
+	pdProcAddress = &pdData->ProcAddress;
+	pdReturnEIP = &pdData->ReturnEIP;
+	pdLibName = &pdData->LibName;
+	pdProcName = &pdData->ProcName;
 
 	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
 

@@ -109,7 +109,14 @@ private:
 	bool bAVLogged{ false };
 
 	// data addresses
-	BYTE* pdData{ nullptr };
+	struct AllocData {
+		void* ProcAddress;
+		void* ReturnEIP;
+		char LibName[MaxNameLength];
+		char ProcName[MaxNameLength];
+	};
+
+	AllocData* pdData{ nullptr };
 
 	void* pdProcAddress{ nullptr };
 	void* pdReturnEIP{ nullptr };
