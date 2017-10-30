@@ -108,7 +108,9 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			PatchMem(exceptAddr, &Breakpoints[exceptAddr].original_opcode, 1);
 
 			if(loop_LoadLibrary == v_AllHooks.end())
+			{
 				loop_LoadLibrary = v_AllHooks.begin();
+			}
 			else
 			{
 				auto const& hook = *loop_LoadLibrary;
