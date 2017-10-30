@@ -439,10 +439,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	pdData = pAlloc + 0x100;
 
 	pdProcAddress = pdData;
-	pdMessage = pdData + 0x04;
 	pdReturnEIP = pdData + 0x08;
-	pdRegisters = pdData + 0x0C;
-	pdBuffer = pdData + 0x34;
 
 	// only needed at start
 	pdLibName = pdData + 4;

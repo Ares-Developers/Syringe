@@ -112,11 +112,7 @@ private:
 	BYTE* pdData{ nullptr };
 
 	void* pdProcAddress{ nullptr };
-	void* pdMessage{ nullptr };
 	void* pdReturnEIP{ nullptr };
-	void* pdRegisters{ nullptr };
-	void* pdBuffer{ nullptr };
-
 	void* pdLibName{ nullptr };
 	void* pdProcName{ nullptr };
 
