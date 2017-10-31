@@ -456,17 +456,15 @@ void SyringeDebugger::Run(std::string_view const arguments)
 		0x68, INIT, INIT, INIT, INIT, // push offset pdLibName
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pImLoadLibrary
 		0x85, 0xC0, // test eax, eax
-		0x74, 0x15, // jnz
+		0x74, 0x11, // jz
 		0x68, INIT, INIT, INIT, INIT, // push offset pdProcName
 		0x50, // push eax
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pdImGetProcAddress
-		0x85, 0xC0, // test eax, eax
-		0x90, 0x90, // nop nop
 		0xA3, INIT, INIT, INIT, INIT, // mov pdProcAddress, eax
 		0x5A, // pop edx
 		0x59, // pop ecx
 		0x58, // pop eax
-		0xEB, 0xD3 // jmp @0
+		0xEB, 0xD7 // jmp @0
 	};
 
 	PatchMem(pcLoadLibraryEnd, cLoadLibrary, sizeof(cLoadLibrary));
@@ -474,7 +472,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	PatchMem(pcLoadLibraryEnd + 0x0B, &pImLoadLibrary, 4);
 	PatchMem(pcLoadLibraryEnd + 0x14, &pdProcName, 4);
 	PatchMem(pcLoadLibraryEnd + 0x1B, &pImGetProcAddress, 4);
-	PatchMem(pcLoadLibraryEnd + 0x24, &pdProcAddress, 4);
+	PatchMem(pcLoadLibraryEnd + 0x20, &pdProcAddress, 4);
 
 	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
