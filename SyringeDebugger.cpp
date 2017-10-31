@@ -7,6 +7,7 @@
 #include "Support.h"
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <memory>
 #include <numeric>
@@ -467,12 +468,19 @@ void SyringeDebugger::Run(std::string_view const arguments)
 		0xEB, 0xD7 // jmp @0
 	};
 
-	PatchMem(pcLoadLibraryEnd, cLoadLibrary, sizeof(cLoadLibrary));
-	PatchMem(pcLoadLibraryEnd + 0x05, &pdLibName, 4);
-	PatchMem(pcLoadLibraryEnd + 0x0B, &pImLoadLibrary, 4);
-	PatchMem(pcLoadLibraryEnd + 0x14, &pdProcName, 4);
-	PatchMem(pcLoadLibraryEnd + 0x1B, &pImGetProcAddress, 4);
-	PatchMem(pcLoadLibraryEnd + 0x20, &pdProcAddress, 4);
+	std::array<BYTE, sizeof(cLoadLibrary)> code;
+
+	auto const ApplyPatch = [](void* ptr, auto&& data) {
+		std::memcpy(ptr, &data, sizeof(data));
+	};
+
+	ApplyPatch(code.data(), cLoadLibrary);
+	ApplyPatch(code.data() + 0x05, pdLibName);
+	ApplyPatch(code.data() + 0x0B, pImLoadLibrary);
+	ApplyPatch(code.data() + 0x14, pdProcName);
+	ApplyPatch(code.data() + 0x1B, pImGetProcAddress);
+	ApplyPatch(code.data() + 0x20, &pdData->ProcAddress);
+	PatchMem(pcLoadLibraryEnd, code.data(), code.size());
 
 	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
