@@ -178,7 +178,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 				std::vector<BYTE> code;
 
 				auto const ApplyPatch = [](void* ptr, auto&& data) {
-					std::memcpy(ptr, data, sizeof(data));
+					std::memcpy(ptr, &data, sizeof(data));
 				};
 
 				for(auto& it : Breakpoints)
@@ -221,14 +221,14 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 						if(hook.proc_address)
 						{
 							ApplyPatch(p_code, code_call); // code
-							ApplyPatch(p_code + 0x03, &it.first); // PUSH HookAddress
+							ApplyPatch(p_code + 0x03, it.first); // PUSH HookAddress
 
 							auto const rel = RelativeOffset(
 								base + (p_code - code.data() + 0x0D), hook.proc_address);
-							ApplyPatch(p_code + 0x09, &rel); // CALL
-							ApplyPatch(p_code + 0x11, &pdReturnEIP); // MOV
-							ApplyPatch(p_code + 0x19, &pdReturnEIP); // CMP
-							ApplyPatch(p_code + 0x22, &pdReturnEIP); // JMP ds:ReturnEIP
+							ApplyPatch(p_code + 0x09, rel); // CALL
+							ApplyPatch(p_code + 0x11, pdReturnEIP); // MOV
+							ApplyPatch(p_code + 0x19, pdReturnEIP); // CMP
+							ApplyPatch(p_code + 0x22, pdReturnEIP); // JMP ds:ReturnEIP
 
 							p_code += sizeof(code_call);
 						}
@@ -246,7 +246,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 						base + (p_code - code.data() + 0x05),
 						static_cast<BYTE*>(it.first) + 0x05);
 					ApplyPatch(p_code, jmp_back);
-					ApplyPatch(p_code + 0x01, &rel);
+					ApplyPatch(p_code + 0x01, rel);
 
 					PatchMem(base, code.data(), code.size());
 
@@ -273,7 +273,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 					auto const rel2 = RelativeOffset(p_original_code + 5, base);
 					code.assign(std::max(overridden, sizeof(jmp)), NOP);
 					ApplyPatch(code.data(), jmp);
-					ApplyPatch(code.data() + 0x01, &rel2);
+					ApplyPatch(code.data() + 0x01, rel2);
 
 					PatchMem(p_original_code, code.data(), code.size());
 				}
