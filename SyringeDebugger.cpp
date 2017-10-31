@@ -177,10 +177,6 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 				std::vector<BYTE> code;
 
-				auto const ApplyPatch = [](void* ptr, auto&& data) {
-					std::memcpy(ptr, &data, sizeof(data));
-				};
-
 				for(auto& it : Breakpoints)
 				{
 					if(it.first == nullptr || it.first == pcEntryPoint)
@@ -469,11 +465,6 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	};
 
 	std::array<BYTE, sizeof(cLoadLibrary)> code;
-
-	auto const ApplyPatch = [](void* ptr, auto&& data) {
-		std::memcpy(ptr, &data, sizeof(data));
-	};
-
 	ApplyPatch(code.data(), cLoadLibrary);
 	ApplyPatch(code.data() + 0x05, pdLibName);
 	ApplyPatch(code.data() + 0x0B, pImLoadLibrary);

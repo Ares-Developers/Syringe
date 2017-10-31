@@ -5,6 +5,7 @@
 #include "CRC32.h"
 #include "PortableExecutable.h"
 
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -49,6 +50,12 @@ private:
 
 	// helper Functions
 	static DWORD __fastcall RelativeOffset(void const* from, void const* to);
+
+	template<typename T>
+	static void ApplyPatch(void* ptr, T&& data) noexcept
+	{
+		std::memcpy(ptr, &data, sizeof(data));
+	}
 
 	// thread info
 	struct ThreadInfo
