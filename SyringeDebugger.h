@@ -125,11 +125,6 @@ private:
 
 	AllocData* pdData{ nullptr };
 
-	void* pdProcAddress{ nullptr };
-	void* pdReturnEIP{ nullptr };
-	void* pdLibName{ nullptr };
-	void* pdProcName{ nullptr };
-
 	// code addresses
 	BYTE* pcLoadLibrary{ nullptr };
 	BYTE* pcLoadLibraryEnd{ nullptr };
