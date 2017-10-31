@@ -456,7 +456,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 		0x68, INIT, INIT, INIT, INIT, // push offset pdLibName
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pImLoadLibrary
 		0x85, 0xC0, // test eax, eax
-		0x74, 0x11, // jz
+		0x74, 0x0C, // jz
 		0x68, INIT, INIT, INIT, INIT, // push offset pdProcName
 		0x50, // push eax
 		0xFF, 0x15, INIT, INIT, INIT, INIT, // call pdImGetProcAddress
