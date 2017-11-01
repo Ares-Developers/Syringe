@@ -127,7 +127,6 @@ private:
 
 	// code addresses
 	BYTE* pcLoadLibrary{ nullptr };
-	BYTE* pcLoadLibraryEnd{ nullptr };
 
 	struct HookBuffer {
 		std::map<void*, std::vector<Hook>> hooks;

@@ -433,7 +433,6 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	PatchMem(pAlloc, zero, AllocDataSize);
 
 	// set addresses
-	pcLoadLibraryEnd = pAlloc;
 	pcLoadLibrary = pAlloc + 1;
 	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
 
@@ -466,7 +465,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	ApplyPatch(code.data() + 0x14, &pdData->ProcName);
 	ApplyPatch(code.data() + 0x1B, pImGetProcAddress);
 	ApplyPatch(code.data() + 0x20, &pdData->ProcAddress);
-	PatchMem(pcLoadLibraryEnd, code.data(), code.size());
+	PatchMem(pAlloc, code.data(), code.size());
 
 	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
 
@@ -477,7 +476,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	// set breakpoints
 	SetBP(pcEntryPoint);
-	SetBP(pcLoadLibraryEnd);
+	SetBP(pAlloc);
 
 	DEBUG_EVENT dbgEvent;
 	ResumeThread(pInfo.hThread);
