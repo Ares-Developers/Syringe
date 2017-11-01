@@ -432,16 +432,13 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	char zero[AllocDataSize] = {};
 	PatchMem(pAlloc, zero, AllocDataSize);
 
-	Log::WriteLine(__FUNCTION__ ": Setting addresses...");
-
 	// set addresses
-	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
-
-	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
-
-	// write DLL loader code
 	pcLoadLibraryEnd = pAlloc;
 	pcLoadLibrary = pAlloc + 1;
+	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
+
+	// write DLL loader code
+	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
 
 	static BYTE const cLoadLibrary[] = {
 		0x90, // NOP
