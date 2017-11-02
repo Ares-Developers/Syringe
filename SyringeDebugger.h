@@ -125,7 +125,9 @@ private:
 		char ProcName[MaxNameLength];
 	};
 
-	AllocData* pdData{ nullptr };
+	AllocData* GetData() const noexcept {
+		return reinterpret_cast<AllocData*>(pAlloc.get());
+	};
 
 	struct HookBuffer {
 		std::map<void*, std::vector<Hook>> hooks;

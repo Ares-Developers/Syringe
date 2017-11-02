@@ -115,7 +115,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			else
 			{
 				auto const& hook = *loop_LoadLibrary;
-				ReadMem(&pdData->ProcAddress, &hook->proc_address, 4);
+				ReadMem(&GetData()->ProcAddress, &hook->proc_address, 4);
 
 				if(!hook->proc_address) {
 					Log::WriteLine(
@@ -129,10 +129,10 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			if(loop_LoadLibrary != v_AllHooks.end())
 			{
 				auto const& hook = *loop_LoadLibrary;
-				PatchMem(&pdData->LibName, hook->lib, MaxNameLength);
-				PatchMem(&pdData->ProcName, hook->proc, MaxNameLength);
+				PatchMem(&GetData()->LibName, hook->lib, MaxNameLength);
+				PatchMem(&GetData()->ProcName, hook->proc, MaxNameLength);
 
-				context.Eip = reinterpret_cast<DWORD>(&pdData->LoadLibraryFunc);
+				context.Eip = reinterpret_cast<DWORD>(&GetData()->LoadLibraryFunc);
 			}
 			else
 			{
@@ -223,7 +223,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 								base + (p_code - code.data() + 0x0D), hook.proc_address);
 							ApplyPatch(p_code + 0x09, rel); // CALL
 
-							auto const pdReturnEIP = &pdData->ReturnEIP;
+							auto const pdReturnEIP = &GetData()->ReturnEIP;
 							ApplyPatch(p_code + 0x11, pdReturnEIP); // MOV
 							ApplyPatch(p_code + 0x19, pdReturnEIP); // CMP
 							ApplyPatch(p_code + 0x22, pdReturnEIP); // JMP ds:ReturnEIP
@@ -432,9 +432,6 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	char zero[AllocDataSize] = {};
 	PatchMem(pAlloc, zero, AllocDataSize);
 
-	// set address
-	pdData = reinterpret_cast<AllocData*>(pAlloc.get());
-
 	// write DLL loader code
 	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
 
@@ -459,14 +456,14 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	std::array<BYTE, sizeof(cLoadLibrary)> code;
 	static_assert(AllocData::CodeSize >= sizeof(cLoadLibrary));
 	ApplyPatch(code.data(), cLoadLibrary);
-	ApplyPatch(code.data() + 0x04, &pdData->LibName);
+	ApplyPatch(code.data() + 0x04, &GetData()->LibName);
 	ApplyPatch(code.data() + 0x0A, pImLoadLibrary);
-	ApplyPatch(code.data() + 0x13, &pdData->ProcName);
+	ApplyPatch(code.data() + 0x13, &GetData()->ProcName);
 	ApplyPatch(code.data() + 0x1A, pImGetProcAddress);
-	ApplyPatch(code.data() + 0x1F, &pdData->ProcAddress);
-	PatchMem(&pdData->LoadLibraryFunc, code.data(), code.size());
+	ApplyPatch(code.data() + 0x1F, &GetData()->ProcAddress);
+	PatchMem(&GetData()->LoadLibraryFunc, code.data(), code.size());
 
-	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", &pdData->LoadLibraryFunc);
+	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", &GetData()->LoadLibraryFunc);
 
 	// breakpoints for DLL loading and proc address retrieving
 	bDLLsLoaded = false;
