@@ -433,14 +433,13 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	PatchMem(pAlloc, zero, AllocDataSize);
 
 	// set addresses
-	pcLoadLibrary = pAlloc + 1;
+	pcLoadLibrary = pAlloc;
 	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
 
 	// write DLL loader code
 	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
 
 	static BYTE const cLoadLibrary[] = {
-		0x90, // NOP
 		0x50, // push eax
 		0x51, // push ecx
 		0x52, // push edx
@@ -455,16 +454,16 @@ void SyringeDebugger::Run(std::string_view const arguments)
 		0x5A, // pop edx
 		0x59, // pop ecx
 		0x58, // pop eax
-		0xEB, 0xD7 // jmp @0
+		INT3, NOP // int3 and some padding
 	};
 
 	std::array<BYTE, sizeof(cLoadLibrary)> code;
 	ApplyPatch(code.data(), cLoadLibrary);
-	ApplyPatch(code.data() + 0x05, &pdData->LibName);
-	ApplyPatch(code.data() + 0x0B, pImLoadLibrary);
-	ApplyPatch(code.data() + 0x14, &pdData->ProcName);
-	ApplyPatch(code.data() + 0x1B, pImGetProcAddress);
-	ApplyPatch(code.data() + 0x20, &pdData->ProcAddress);
+	ApplyPatch(code.data() + 0x04, &pdData->LibName);
+	ApplyPatch(code.data() + 0x0A, pImLoadLibrary);
+	ApplyPatch(code.data() + 0x13, &pdData->ProcName);
+	ApplyPatch(code.data() + 0x1A, pImGetProcAddress);
+	ApplyPatch(code.data() + 0x1F, &pdData->ProcAddress);
 	PatchMem(pAlloc, code.data(), code.size());
 
 	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
@@ -474,9 +473,8 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	bHooksCreated = false;
 	loop_LoadLibrary = v_AllHooks.end();
 
-	// set breakpoints
+	// set breakpoint
 	SetBP(pcEntryPoint);
-	SetBP(pAlloc);
 
 	DEBUG_EVENT dbgEvent;
 	ResumeThread(pInfo.hThread);
