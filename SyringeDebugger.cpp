@@ -416,7 +416,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 void SyringeDebugger::Run(std::string_view const arguments)
 {
-	constexpr auto AllocDataSize = 0x1000;
+	constexpr auto AllocDataSize = sizeof(AllocData);
 
 	Log::WriteLine(
 		__FUNCTION__ ": Running process to debug. cmd = \"%s %.*s\"",
@@ -427,10 +427,6 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	pAlloc = AllocMem(nullptr, AllocDataSize);
 
 	Log::WriteLine(__FUNCTION__ ": pAlloc = 0x%08X", pAlloc.get());
-
-	Log::WriteLine(__FUNCTION__ ": Filling allocated space with zero...");
-	char zero[AllocDataSize] = {};
-	PatchMem(pAlloc, zero, AllocDataSize);
 
 	// write DLL loader code
 	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
@@ -453,15 +449,15 @@ void SyringeDebugger::Run(std::string_view const arguments)
 		INT3, NOP // int3 and some padding
 	};
 
-	std::array<BYTE, sizeof(cLoadLibrary)> code;
+	std::array<BYTE, AllocDataSize> data;
 	static_assert(AllocData::CodeSize >= sizeof(cLoadLibrary));
-	ApplyPatch(code.data(), cLoadLibrary);
-	ApplyPatch(code.data() + 0x04, &GetData()->LibName);
-	ApplyPatch(code.data() + 0x0A, pImLoadLibrary);
-	ApplyPatch(code.data() + 0x13, &GetData()->ProcName);
-	ApplyPatch(code.data() + 0x1A, pImGetProcAddress);
-	ApplyPatch(code.data() + 0x1F, &GetData()->ProcAddress);
-	PatchMem(&GetData()->LoadLibraryFunc, code.data(), code.size());
+	ApplyPatch(data.data(), cLoadLibrary);
+	ApplyPatch(data.data() + 0x04, &GetData()->LibName);
+	ApplyPatch(data.data() + 0x0A, pImLoadLibrary);
+	ApplyPatch(data.data() + 0x13, &GetData()->ProcName);
+	ApplyPatch(data.data() + 0x1A, pImGetProcAddress);
+	ApplyPatch(data.data() + 0x1F, &GetData()->ProcAddress);
+	PatchMem(pAlloc, data.data(), data.size());
 
 	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", &GetData()->LoadLibraryFunc);
 
