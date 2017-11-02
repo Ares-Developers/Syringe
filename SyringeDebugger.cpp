@@ -434,7 +434,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 
 	// set addresses
 	pcLoadLibrary = pAlloc;
-	pdData = reinterpret_cast<AllocData*>(pAlloc + 0x100);
+	pdData = reinterpret_cast<AllocData*>(pAlloc.get());
 
 	// write DLL loader code
 	Log::WriteLine(__FUNCTION__ ": Writing DLL loader & caller code...");
@@ -458,6 +458,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	};
 
 	std::array<BYTE, sizeof(cLoadLibrary)> code;
+	static_assert(AllocData::CodeSize >= sizeof(cLoadLibrary));
 	ApplyPatch(code.data(), cLoadLibrary);
 	ApplyPatch(code.data() + 0x04, &pdData->LibName);
 	ApplyPatch(code.data() + 0x0A, pImLoadLibrary);

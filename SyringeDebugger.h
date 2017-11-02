@@ -117,6 +117,8 @@ private:
 
 	// data addresses
 	struct AllocData {
+		static constexpr auto CodeSize = 0x40u;
+		std::byte LoadLibraryFunc[CodeSize];
 		void* ProcAddress;
 		void* ReturnEIP;
 		char LibName[MaxNameLength];
