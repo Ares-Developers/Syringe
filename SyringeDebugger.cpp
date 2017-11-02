@@ -132,7 +132,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 				PatchMem(&pdData->LibName, hook->lib, MaxNameLength);
 				PatchMem(&pdData->ProcName, hook->proc, MaxNameLength);
 
-				context.Eip = reinterpret_cast<DWORD>(pcLoadLibrary);
+				context.Eip = reinterpret_cast<DWORD>(&pdData->LoadLibraryFunc);
 			}
 			else
 			{
@@ -432,8 +432,7 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	char zero[AllocDataSize] = {};
 	PatchMem(pAlloc, zero, AllocDataSize);
 
-	// set addresses
-	pcLoadLibrary = pAlloc;
+	// set address
 	pdData = reinterpret_cast<AllocData*>(pAlloc.get());
 
 	// write DLL loader code
@@ -465,9 +464,9 @@ void SyringeDebugger::Run(std::string_view const arguments)
 	ApplyPatch(code.data() + 0x13, &pdData->ProcName);
 	ApplyPatch(code.data() + 0x1A, pImGetProcAddress);
 	ApplyPatch(code.data() + 0x1F, &pdData->ProcAddress);
-	PatchMem(pAlloc, code.data(), code.size());
+	PatchMem(&pdData->LoadLibraryFunc, code.data(), code.size());
 
-	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", pcLoadLibrary);
+	Log::WriteLine(__FUNCTION__ ": pcLoadLibrary = 0x%08X", &pdData->LoadLibraryFunc);
 
 	// breakpoints for DLL loading and proc address retrieving
 	bDLLsLoaded = false;

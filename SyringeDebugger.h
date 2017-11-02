@@ -127,9 +127,6 @@ private:
 
 	AllocData* pdData{ nullptr };
 
-	// code addresses
-	BYTE* pcLoadLibrary{ nullptr };
-
 	struct HookBuffer {
 		std::map<void*, std::vector<Hook>> hooks;
 		CRC32 checksum;
