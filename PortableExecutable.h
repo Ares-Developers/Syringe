@@ -21,7 +21,7 @@ struct PEThunkData
 	DWORD						Address;
 
 	//bIsOrdinal
-	int							Ordinal;
+	DWORD						Ordinal;
 
 	//!bIsOrdinal
 	std::string					Name;

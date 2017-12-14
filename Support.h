@@ -12,7 +12,7 @@
 
 struct invalid_command_arguments : std::exception {};
 
-inline auto trim(std::string_view string) {
+inline auto trim(std::string_view string) noexcept {
 	auto const first = string.find_first_not_of(' ');
 	if(first != std::string_view::npos) {
 		auto const last = string.find_last_not_of(' ');
@@ -75,7 +75,7 @@ inline std::string replace(
 }
 
 // returns something %.*s can format
-inline auto printable(std::string_view const string) {
+inline auto printable(std::string_view const string) noexcept {
 	return std::make_pair(string.size(), string.data());
 }
 
@@ -88,7 +88,7 @@ inline auto GetFormatMessage(DWORD const error) {
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		reinterpret_cast<LPTSTR>(handle.set()), 0u, nullptr);
 
-	auto const message = static_cast<LPTSTR>(handle.get());
+	auto const message = static_cast<LPCTSTR>(handle.get());
 	while(count && isspace(static_cast<unsigned char>(message[count - 1]))) {
 		--count;
 	}

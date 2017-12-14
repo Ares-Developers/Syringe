@@ -134,7 +134,7 @@ private:
 		CRC32 checksum;
 		size_t count{ 0 };
 
-		void add(void* const eip, Hook& hook) {
+		void add(void* const eip, Hook const& hook) {
 			auto& h = hooks[eip];
 			h.push_back(hook);
 

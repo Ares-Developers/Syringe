@@ -60,7 +60,7 @@ int Run(std::string_view const arguments) {
 		auto const msg = std::string(failure) + "\n\n" + message;
 		MessageBoxA(nullptr, msg.c_str(), VersionString, MB_OK | MB_ICONERROR);
 
-		exit_code = e.error;
+		exit_code = static_cast<long>(e.error);
 	}
 	catch(invalid_command_arguments const&)
 	{
@@ -76,7 +76,7 @@ int Run(std::string_view const arguments) {
 	}
 
 	Log::WriteLine("WinMain: Exiting on failure.");
-	return exit_code;
+	return static_cast<int>(exit_code);
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)

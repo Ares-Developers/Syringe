@@ -335,7 +335,6 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 			//Log::WriteLine(__FUNCTION__ ": ACCESS VIOLATION at 0x%08X!", exceptAddr);
 			auto const& threadInfo = Threads[dbgEvent.dwThreadId];
 			HANDLE currentThread = threadInfo.Thread;
-			CONTEXT context;
 
 			char const* access = nullptr;
 			switch(dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[0])
@@ -349,6 +348,7 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 				access,
 				dbgEvent.u.Exception.ExceptionRecord.ExceptionInformation[1]);
 
+			CONTEXT context;
 			context.ContextFlags = CONTEXT_FULL;
 			GetThreadContext(currentThread, &context);
 
@@ -364,13 +364,13 @@ DWORD SyringeDebugger::HandleException(DEBUG_EVENT const& dbgEvent)
 
 			Log::WriteLine("\tStack dump:");
 			auto const esp = reinterpret_cast<DWORD*>(context.Esp);
-			for(auto p = esp; p < &esp[0x100]; ++p)
-			{
+			for(auto p = esp; p < &esp[0x100]; ++p) {
 				DWORD dw;
-				if(ReadMem(p, &dw, 4))
+				if(ReadMem(p, &dw, 4)) {
 					Log::WriteLine("\t0x%08X:\t0x%08X", p, dw);
-				else
+				} else {
 					Log::WriteLine("\t0x%08X:\t(could not be read)", p);
+				}
 			}
 			Log::WriteLine();
 
@@ -625,7 +625,7 @@ void SyringeDebugger::FindDLLs()
 	Breakpoints.clear();
 
 	for(auto file = FindFile("*.dll"); file; ++file) {
-		std::string_view fn(file->cFileName);
+		std::string_view const fn(file->cFileName);
 
 		//Log::WriteLine(
 		//	__FUNCTION__ ": Potential DLL: \"%.*s\"", printable(fn));
@@ -698,16 +698,16 @@ bool SyringeDebugger::ParseInjFileHooks(
 		while(fgets(line, Size, file)) {
 			if(*line != ';' && *line != '\r' && *line != '\n') {
 				void* eip = nullptr;
-				size_t n_over = 0;
+				auto n_over = 0u;
 				char func[MaxNameLength];
 				func[0] = '\0';
 
 				// parse the line (length is optional, defaults to 0)
 				if(sscanf_s(
-					line, "%p = %[^ \t;,\r\n] , %x", &eip, func, MaxNameLength,
-					&n_over) >= 2)
+					line, "%p = %[^ \t;,\r\n] , %x", &eip, func,
+					static_cast<unsigned int>(MaxNameLength), &n_over) >= 2)
 				{
-					hooks.add(eip, lib, func, n_over);
+					hooks.add(eip, lib, func, static_cast<size_t>(n_over));
 				}
 			}
 		}
