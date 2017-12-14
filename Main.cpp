@@ -7,7 +7,7 @@
 #include <commctrl.h>
 
 int Run(std::string_view const arguments) {
-	constexpr auto const VersionString = "Syringe 0.7.1.1";
+	constexpr auto const VersionString = "Syringe 0.7.2.0";
 
 	InitCommonControls();
 
